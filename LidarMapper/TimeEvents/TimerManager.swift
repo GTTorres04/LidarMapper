@@ -10,12 +10,12 @@ import Foundation
 
 class TimerManager: ObservableObject {
     @Published var elapsedTime: String = "00:00:00"
-    @Published var startTime: Date = Date()
-    @Published var timer: Timer? = nil
+    @Published  var startTime: Date = Date()
+    @Published  var timer: Timer? = nil
     
     //Timer
     func startTimer() {
-       startTime = Date()
+        startTime = Date()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
             let now = Date()
             let elapsed = now.timeIntervalSince(self.startTime)
@@ -23,7 +23,7 @@ class TimerManager: ObservableObject {
             let minutes = (Int(elapsed) % 3600) / 60
             let seconds = Int(elapsed) % 60
             self.elapsedTime = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-            print("Elapsed Time: \(self.elapsedTime) \n")
+            print("Elapsed Time: \(self.elapsedTime)")
         }
     }
 }

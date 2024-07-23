@@ -7,6 +7,7 @@
 
 import SwiftUI
 import CoreMotion
+import Combine
 
 
 struct ContentView: View {
@@ -27,9 +28,9 @@ struct ContentView: View {
                 acc.startAccelerometerUpdates()
                 mag.checkStatus()
                 mag.startMagnetometerUpdates()
+            }
         }
     }
-}
 
 
     #Preview {
