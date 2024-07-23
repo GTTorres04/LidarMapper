@@ -36,7 +36,7 @@ func checkStatus() {
     }
 }
 
-//Dados do acelerometro joasdhiohqodh
+//Dados do acelerometro 
 func startAccelerometerUpdates() {
     if motionManager.isAccelerometerAvailable {
         motionManager.accelerometerUpdateInterval = 1.0 / 100.0  // 100 Hz
