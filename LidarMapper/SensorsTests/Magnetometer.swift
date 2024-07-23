@@ -12,6 +12,9 @@ import Foundation
 class Magnetometer: ObservableObject {
     //Objeto que gere sensores relacionados a movimento.
     private var motionManager = CMMotionManager()
+    private var deviceMotionManager = CMMotionManager()
+    
+    
     @Published var x: Double = 0.0
     @Published var y: Double = 0.0
     @Published var z: Double = 0.0
@@ -28,8 +31,11 @@ class Magnetometer: ObservableObject {
         if motionManager.isMagnetometerAvailable {
             motionManager.magnetometerUpdateInterval = 1.0 / 100.0  // 100 Hz
             motionManager.startMagnetometerUpdates(to: OperationQueue.main) { (data, error) in
-                if magData = data  {
-                    self.x = magneticField
+                if let deviceMotion = data  {
+                    let magneticField = deviceMotion.magneticField
+                    self.x = magneticField.x
+                    self.y = magneticField.y
+                    self.z = magneticField.z
                     
                     print("MAGNETOMETER DATA: \n")
                     print("X axis:  \(self.x) \n")
