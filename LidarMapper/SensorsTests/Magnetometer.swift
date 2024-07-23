@@ -28,11 +28,8 @@ class Magnetometer: ObservableObject {
         if motionManager.isMagnetometerAvailable {
             motionManager.magnetometerUpdateInterval = 1.0 / 100.0  // 100 Hz
             motionManager.startMagnetometerUpdates(to: OperationQueue.main) { (data, error) in
-                if data != nil  {
-                    let magData = CMCalibratedMagneticField() //Campo magnetico calibrado
-                    self.x = magData.field.x
-                    self.y = magData.field.y
-                    self.z = magData.field.z
+                if magData = data  {
+                    self.x = magneticField
                     
                     print("MAGNETOMETER DATA: \n")
                     print("X axis:  \(self.x) \n")
