@@ -22,14 +22,11 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            timerManager.startTimer()
-            acc.checkStatus()
-            acc.startAccelerometerUpdates()
-            mag.checkStatus()
-            mag.startMagnetometerUpdates()
-        }
-        .onDisappear {
-            //
+                timerManager.startTimer()
+                acc.checkStatus()
+                acc.startAccelerometerUpdates()
+                mag.checkStatus()
+                mag.startMagnetometerUpdates()
         }
     }
 }

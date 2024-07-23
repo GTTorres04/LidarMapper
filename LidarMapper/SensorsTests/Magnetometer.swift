@@ -28,15 +28,12 @@ class Magnetometer: ObservableObject {
     func startMagnetometerUpdates() {
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 1.0 / 100.0  // 100 Hz
-            motionManager.startDeviceMotionUpdates(using:.xTrueNorthZVertical, to: OperationQueue.main) { (motion, error) in
+            motionManager.startDeviceMotionUpdates(using:.xMagneticNorthZVertical, to: OperationQueue.main) { (motion, error) in
                 if let deviceMotion = motion  {
                     let magData = deviceMotion.magneticField.field
-                    self.x = magData.x
-                    self.y = magData.y
-                    self.z = magData.z
-                    self.x = self.mapTo360Degrees(value: self.x)
-                    self.y = self.mapTo360Degrees(value: self.y)
-                    self.z = self.mapTo360Degrees(value: self.z)
+                    self.x = (magData.x * 10*exp(-6))
+                    self.y = (magData.y * 10*exp(-6))
+                    self.z = (magData.z * 10*exp(-6))
                     
                     print("MAGNETOMETER DATA: \n")
                     print("X axis:  \(self.x) \n")
@@ -50,11 +47,5 @@ class Magnetometer: ObservableObject {
             print("Magnetometer is not available")
         } 
     }
-    
-    func mapTo360Degrees(value: Double) -> Double {
-        let degrees = value.truncatingRemainder(dividingBy: 360)
-        return degrees >= 0 ? degrees : degrees + 360
-    }
-    
-}
+} 
 
