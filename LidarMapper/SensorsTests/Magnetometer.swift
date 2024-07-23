@@ -9,7 +9,7 @@ import SwiftUI
 import CoreMotion
 
 class Magnetometer {
-    
+    //Objeto que gere sensores relacionados a movimento.
     let motionManager = CMMotionManager()
     
     //Verifica se o dispositivo possui magnetometro
@@ -19,7 +19,28 @@ class Magnetometer {
         }
     }
     
-    
-    
+    //Dados do Magnetometro
+    func startMagnetometerUpdates() {
+        if motionManager.isMagnetometerAvailable {
+            motionManager.magnetometerUpdateInterval = 1.0 / 100.0  // 100 Hz
+            motionManager.startMagnetometerUpdates(to: OperationQueue.main) { (data, error) in
+                if let magData = data  {
+                    let magData = CMCalibratedMagneticField() //Campo magnetico calibrado
+                    let x = magData.field.x
+                    let y = magData.field.y
+                    let z = magData.field.z
+                    
+                    print("MAGNETOMETER DATA: \n")
+                    print("X axis:  \(x) \n")
+                    print("Y axis:  \(y) \n")
+                    print("Z axis:  \(z) \n")
+                } else {
+                    print("Error: \(String(describing: error?.localizedDescription))")
+                }
+            }
+        } else {
+            print("Magnetometer is not available")
+        }
+    }
 }
 
