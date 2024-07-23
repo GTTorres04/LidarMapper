@@ -8,12 +8,12 @@
 import SwiftUI
 import CoreMotion
 
-var elapsedTime: String = "00:00:00"
-var startTime: Date = Date()
-var timer: Timer? = nil
 
 //Timer
 func startTimer() {
+    var elapsedTime: String = "00:00:00"
+    var startTime: Date = Date()
+    var timer: Timer? = nil
     startTime = Date()
     timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
         let now = Date()

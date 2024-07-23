@@ -19,11 +19,13 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            startTimer()
             let acc = Accelerometer()
+            startTimer()
             acc.checkStatus()
             acc.startAccelerometerUpdates()
-            
+            let mag = Magnetometer()
+            mag.checkStatus()
+            mag.startMagnetometerUpdates()
         }
     }
 }

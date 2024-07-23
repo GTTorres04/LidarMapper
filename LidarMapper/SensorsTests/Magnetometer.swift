@@ -24,7 +24,7 @@ class Magnetometer {
         if motionManager.isMagnetometerAvailable {
             motionManager.magnetometerUpdateInterval = 1.0 / 100.0  // 100 Hz
             motionManager.startMagnetometerUpdates(to: OperationQueue.main) { (data, error) in
-                if let magData = data  {
+                if data != nil  {
                     let magData = CMCalibratedMagneticField() //Campo magnetico calibrado
                     let x = magData.field.x
                     let y = magData.field.y
