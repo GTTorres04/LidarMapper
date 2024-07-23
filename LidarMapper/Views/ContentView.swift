@@ -29,11 +29,7 @@ struct ContentView: View {
             mag.startMagnetometerUpdates()
         }
         .onDisappear {
-            timerManager.startTimer()
-            acc.checkStatus()
-            acc.startAccelerometerUpdates()
-            mag.checkStatus()
-            mag.startMagnetometerUpdates()
+            //
         }
     }
 }

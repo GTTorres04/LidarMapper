@@ -11,7 +11,7 @@ import Foundation
 class TimerManager: ObservableObject {
     @Published var elapsedTime: String = "00:00:00"
     @Published var startTime: Date = Date()
-    private var timer: Timer? = nil
+    @Published var timer: Timer? = nil
     
     //Timer
     func startTimer() {
