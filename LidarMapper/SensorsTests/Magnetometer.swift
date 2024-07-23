@@ -7,10 +7,14 @@
 
 import SwiftUI
 import CoreMotion
+import Foundation
 
-class Magnetometer {
+class Magnetometer: ObservableObject {
     //Objeto que gere sensores relacionados a movimento.
-    let motionManager = CMMotionManager()
+    private var motionManager = CMMotionManager()
+    @Published var x: Double = 0.0
+    @Published var y: Double = 0.0
+    @Published var z: Double = 0.0
     
     //Verifica se o dispositivo possui magnetometro
     func checkStatus() {
@@ -26,14 +30,14 @@ class Magnetometer {
             motionManager.startMagnetometerUpdates(to: OperationQueue.main) { (data, error) in
                 if data != nil  {
                     let magData = CMCalibratedMagneticField() //Campo magnetico calibrado
-                    let x = magData.field.x
-                    let y = magData.field.y
-                    let z = magData.field.z
+                    self.x = magData.field.x
+                    self.y = magData.field.y
+                    self.z = magData.field.z
                     
                     print("MAGNETOMETER DATA: \n")
-                    print("X axis:  \(x) \n")
-                    print("Y axis:  \(y) \n")
-                    print("Z axis:  \(z) \n")
+                    print("X axis:  \(self.x) \n")
+                    print("Y axis:  \(self.y) \n")
+                    print("Z axis:  \(self.z) \n")
                 } else {
                     print("Error: \(String(describing: error?.localizedDescription))")
                 }

@@ -10,6 +10,9 @@ import CoreMotion
 
 
 struct ContentView: View {
+    @StateObject private var timerManager = TimerManager()
+    @StateObject private var acc = Accelerometer()
+    @StateObject private var mag = Magnetometer()
     var body: some View {
         VStack {
             Image(systemName: "globe")
@@ -19,11 +22,9 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            let acc = Accelerometer()
-            startTimer()
+            timerManager.startTimer()
             acc.checkStatus()
             acc.startAccelerometerUpdates()
-            let mag = Magnetometer()
             mag.checkStatus()
             mag.startMagnetometerUpdates()
         }
