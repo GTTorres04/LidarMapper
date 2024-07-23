@@ -19,9 +19,11 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            checkStatus()
-            startAccelerometerUpdates()
             startTimer()
+            let acc = Accelerometer()
+            acc.checkStatus()
+            acc.startAccelerometerUpdates()
+            
         }
     }
 }
