@@ -14,6 +14,7 @@ struct ContentView: View {
     @StateObject var timerManager = TimerManager()
     @StateObject private var acc = Accelerometer()
     @StateObject private var mag = Magnetometer()
+    @StateObject private var gyro = Gyroscope()
     
     var body: some View {
         VStack {
@@ -28,16 +29,23 @@ struct ContentView: View {
             Text("X: \(mag.x)")
             Text("Y: \(mag.y)")
             Text("Z: \(mag.z)")
+            Text("\n")
+            Text("GYROSCOPE DATA: ")
+            .font(.title2)
+            Text("X: \(gyro.x)")
+            Text("Y: \(gyro.y)")
+            Text("Z: \(gyro.z)")
         }
         .padding()
+        
         .onAppear {
-            timerManager.startTimer()
             acc.checkStatus()
             acc.startAccelerometerUpdates()
-        }
-        .onAppear {
             mag.checkStatus()
             mag.startMagnetometerUpdates()
+            gyro.checkStatus()
+            gyro.startGyroUpdates()
+            timerManager.startUpdatingTimestamp()
         }
     }
 }

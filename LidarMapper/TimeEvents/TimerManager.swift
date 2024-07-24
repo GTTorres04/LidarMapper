@@ -11,22 +11,27 @@ import CoreMotion
 import Combine
 
 class TimerManager: ObservableObject {
-    @Published var elapsedTime: String = "00:00:00"
-    @Published var startTime: Date = Date()
-    @Published var timer: Timer? = nil
+    @Published var currentUnixTimestamp: Int
     
-    // Timer
-    func startTimer() {
-        startTime = Date()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
-            let now = Date()
-            let elapsed = now.timeIntervalSince(self.startTime)
-            let hours = Int(elapsed) / 3600
-            let minutes = (Int(elapsed) % 3600) / 60
-            let seconds = Int(elapsed) % 60
-            self.elapsedTime = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
-            print("Elapsed Time: \(self.elapsedTime) \n")  // Ensure this is being called
+    @Published var timer: Timer?
+    
+    init() {
+        // Initialize the timestamp
+        self.currentUnixTimestamp = Int(Date().timeIntervalSince1970)
+        
+        // Start a timer to update the timestamp every second
+        self.startUpdatingTimestamp()
+    }
+    
+    func startUpdatingTimestamp() {
+        // Update timestamp every second
+        timer = Timer.scheduledTimer(withTimeInterval: (1.0 / 100.0), repeats: true) { [weak self] _ in
+            self?.updateTimestamp()
         }
+    }
+    
+    func updateTimestamp() {
+        self.currentUnixTimestamp = Int(Date().timeIntervalSince1970)
     }
 }
 
