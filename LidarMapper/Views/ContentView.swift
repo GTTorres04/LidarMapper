@@ -11,7 +11,7 @@ import Combine
 import Foundation
 
 struct ContentView: View {
-    @StateObject var timerManager = TimerManager()
+    var timerManager = TimerManager()
     @StateObject private var acc = Accelerometer()
     @StateObject private var mag = Magnetometer()
     @StateObject private var gyro = Gyroscope()
