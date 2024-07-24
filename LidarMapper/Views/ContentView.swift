@@ -8,32 +8,43 @@
 import SwiftUI
 import CoreMotion
 import Combine
-
+import Foundation
 
 struct ContentView: View {
-    @StateObject private var timerManager = TimerManager()
+    @StateObject var timerManager = TimerManager()
     @StateObject private var acc = Accelerometer()
     @StateObject private var mag = Magnetometer()
+    
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-                Text("Hello, world!")
+            Text("ACCELEROMETER DATA: ")
+            .font(.title2)
+            Text("X: \(acc.x)")
+            Text("Y: \(acc.y)")
+            Text("Z: \(acc.z)")
+            Text("\n")
+            Text("MAGNETOMETER DATA: ")
+            .font(.title2)
+            Text("X: \(mag.x)")
+            Text("Y: \(mag.y)")
+            Text("Z: \(mag.z)")
         }
         .padding()
         .onAppear {
-                timerManager.startTimer()
-                acc.checkStatus()
-                acc.startAccelerometerUpdates()
-                mag.checkStatus()
-                mag.startMagnetometerUpdates()
-            }
+            timerManager.startTimer()
+            acc.checkStatus()
+            acc.startAccelerometerUpdates()
+        }
+        .onAppear {
+            mag.checkStatus()
+            mag.startMagnetometerUpdates()
         }
     }
+}
+
+#Preview {
+    ContentView()
+}
 
 
-    #Preview {
-        ContentView()
-    }
 

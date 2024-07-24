@@ -8,11 +8,13 @@
 import SwiftUI
 import CoreMotion
 import Foundation
+import Combine
 
 
 class Accelerometer: ObservableObject {
     //Objeto que gere sensores relacionados a movimento.
     private var motionManager = CMMotionManager()
+    
     @Published var x: Double = 0.0
     @Published var y: Double = 0.0
     @Published var z: Double = 0.0

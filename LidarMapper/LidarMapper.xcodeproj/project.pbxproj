@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7601EFE32C5107A900C442F4 /* Gyroscope.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7601EFE22C5107A900C442F4 /* Gyroscope.swift */; };
 		760B2C722C4E906500F3AAD0 /* LidarMapperApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 760B2C712C4E906500F3AAD0 /* LidarMapperApp.swift */; };
 		760B2C742C4E906500F3AAD0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 760B2C732C4E906500F3AAD0 /* ContentView.swift */; };
 		760B2C762C4E906700F3AAD0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 760B2C752C4E906700F3AAD0 /* Assets.xcassets */; };
@@ -37,6 +38,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		7601EFE22C5107A900C442F4 /* Gyroscope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gyroscope.swift; sourceTree = "<group>"; };
 		760B2C6E2C4E906500F3AAD0 /* LidarMapper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidarMapper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		760B2C712C4E906500F3AAD0 /* LidarMapperApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidarMapperApp.swift; sourceTree = "<group>"; };
 		760B2C732C4E906500F3AAD0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -148,6 +150,7 @@
 			children = (
 				760B2CA02C4E977500F3AAD0 /* Accelerometer.swift */,
 				7671DA0B2C4FAE7100E47B17 /* Magnetometer.swift */,
+				7601EFE22C5107A900C442F4 /* Gyroscope.swift */,
 			);
 			path = SensorsTests;
 			sourceTree = "<group>";
@@ -293,6 +296,7 @@
 				760B2C742C4E906500F3AAD0 /* ContentView.swift in Sources */,
 				7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */,
 				7671DA0C2C4FAE7200E47B17 /* Magnetometer.swift in Sources */,
+				7601EFE32C5107A900C442F4 /* Gyroscope.swift in Sources */,
 				760B2CA12C4E977500F3AAD0 /* Accelerometer.swift in Sources */,
 				760B2C722C4E906500F3AAD0 /* LidarMapperApp.swift in Sources */,
 			);

@@ -8,6 +8,7 @@
 import SwiftUI
 import CoreMotion
 import Foundation
+import Combine
 
 class Magnetometer: ObservableObject {
     //Objeto que gere sensores relacionados a movimento.
@@ -39,6 +40,7 @@ class Magnetometer: ObservableObject {
                     print("X axis:  \(self.x) \n")
                     print("Y axis:  \(self.y) \n")
                     print("Z axis:  \(self.z) \n")
+                    print("\u{001B}") //cls
                 } else {
                     print("Error: \(String(describing: error?.localizedDescription))")
                 }
