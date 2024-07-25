@@ -10,13 +10,9 @@ import Foundation
 import CoreMotion
 import Combine
 
-
-import Foundation
-import Combine
-
 class TimerManager: ObservableObject {
-    @Published var currentUnixTimestamp: Int
     
+    @Published var currentUnixTimestamp: Int
     @Published var timer: Timer?
     
     init() {
@@ -33,7 +29,7 @@ class TimerManager: ObservableObject {
     
     func startUpdatingTimestamp() {
         // Update timestamp every second
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+        timer = Timer.scheduledTimer(withTimeInterval: (1.0 / 100.0) , repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.currentUnixTimestamp = self.unixTimestamp()
             print("Current UNIX Timestamp: \(self.currentUnixTimestamp)") // Print to console
