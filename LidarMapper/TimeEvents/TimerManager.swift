@@ -32,7 +32,7 @@ class TimerManager: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: (1.0 / 100.0) , repeats: true) { [weak self] _ in
             guard let self = self else { return }
             self.currentUnixTimestamp = self.unixTimestamp()
-            print("Current UNIX Timestamp: \(self.currentUnixTimestamp)") // Print to console
+            //print("Current UNIX Timestamp: \(self.currentUnixTimestamp)") // Print to console
         }
     }
     

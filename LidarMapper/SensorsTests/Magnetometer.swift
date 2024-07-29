@@ -11,21 +11,21 @@ import Foundation
 import Combine
 
 class Magnetometer: ObservableObject {
-    //Objeto que gere sensores relacionados a movimento.
+    //Object that manages sensors related to motion
     private var motionManager = CMMotionManager()
 
     @Published var x: Double = 0.0
     @Published var y: Double = 0.0
     @Published var z: Double = 0.0
     
-    //Verifica se o dispositivo possui magnetometro
+    //Checks if the device has magnetometer
     func checkStatus() {
         if !motionManager.isDeviceMotionAvailable {
             print("The device doesn't have Magnetometer")
         }
     }
     
-    //Dados do Magnetometro
+    //Magnetometer Data
     func startMagnetometerUpdates() {
         if motionManager.isDeviceMotionAvailable {
             motionManager.deviceMotionUpdateInterval = 1.0 / 100.0  // 100 Hz
@@ -36,10 +36,10 @@ class Magnetometer: ObservableObject {
                     self.y = (magData.y * 10*exp(-6))
                     self.z = (magData.z * 10*exp(-6))
                     
-                    print("MAGNETOMETER DATA: \n")
+                   /* print("MAGNETOMETER DATA: \n")
                     print("X axis:  \(self.x) \n")
                     print("Y axis:  \(self.y) \n")
-                    print("Z axis:  \(self.z) \n")
+                    print("Z axis:  \(self.z) \n")*/
                 } else {
                     print("Error: \(String(describing: error?.localizedDescription))")
                 }

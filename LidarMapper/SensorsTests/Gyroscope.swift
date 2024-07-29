@@ -11,21 +11,21 @@ import Foundation
 import Combine
 
 class Gyroscope: ObservableObject {
-    //Objeto que gere sensores relacionados a movimento.
+    //Object that manages sensors related to motion
     private var motionManager = CMMotionManager()
     
     @Published var x: Double = 0.0
     @Published var y: Double = 0.0
     @Published var z: Double = 0.0
     
-    //Verifica se o dispositivo possui giroscopio
+    //Checks if the device has Gyroscope
     func checkStatus() {
         if !motionManager.isGyroAvailable {
             print("The device doesn't have Magnetometer")
         }
     }
     
-    //Dados do Magnetometro
+    //Gyroscope Data
     func startGyroUpdates() {
         if motionManager.isGyroAvailable {
             motionManager.gyroUpdateInterval = 1.0 / 100.0  // 100 Hz
@@ -35,10 +35,10 @@ class Gyroscope: ObservableObject {
                     self.y = gyroData.rotationRate.y
                     self.z = gyroData.rotationRate.z
                     
-                    print("GYROSCOPE DATA: \n")
+                    /*print("GYROSCOPE DATA: \n")
                     print("X axis:  \(self.x) \n")
                     print("Y axis:  \(self.y) \n")
-                    print("Z axis:  \(self.z) \n")
+                    print("Z axis:  \(self.z) \n")*/
                 } else {
                     print("Error: \(String(describing: error?.localizedDescription))")
                 }

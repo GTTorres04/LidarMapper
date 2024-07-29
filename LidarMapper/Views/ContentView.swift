@@ -15,6 +15,7 @@ struct ContentView: View {
     @StateObject private var acc = Accelerometer()
     @StateObject private var mag = Magnetometer()
     @StateObject private var gyro = Gyroscope()
+    @StateObject private var webSocket = WebSocketManager()
     
     var body: some View {
         VStack {
@@ -57,6 +58,7 @@ struct ContentView: View {
             mag.startMagnetometerUpdates()
             gyro.checkStatus()
             gyro.startGyroUpdates()
+            webSocket.receive()
         }
     }
 }
