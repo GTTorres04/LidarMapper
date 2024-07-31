@@ -12,7 +12,8 @@ import Foundation
 
 struct ContentView: View {
     @StateObject var timerManager = TimerManager()
-    @StateObject private var acc = Accelerometer()
+    @StateObject private var acc = Accelerometer(webSocketManager: WebSocketManager())
+    
     @StateObject private var mag = Magnetometer()
     @StateObject private var gyro = Gyroscope()
     @StateObject private var webSocket = WebSocketManager()
@@ -52,12 +53,12 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            acc.checkStatus()
-            acc.startAccelerometerUpdates()
-            mag.checkStatus()
-            mag.startMagnetometerUpdates()
-            gyro.checkStatus()
-            gyro.startGyroUpdates()
+            //acc.checkStatus()
+            //acc.startAccelerometerUpdates()
+            //mag.checkStatus()
+            //mag.startMagnetometerUpdates()
+            //gyro.checkStatus()
+            //gyro.startGyroUpdates()
             webSocket.receive()
         }
     }

@@ -13,6 +13,7 @@ import Combine
 class Accelerometer: ObservableObject {
     //Object that manages sensors related to motion
     private var motionManager = CMMotionManager()
+    private var webSocketManager: WebSocketManager
     
     @Published var x: Double = 0.0
     @Published var y: Double = 0.0
@@ -20,9 +21,9 @@ class Accelerometer: ObservableObject {
     
     //private weak var webSocketManager: WebSocketManager?
     
-    /*init(webSocketManager: WebSocketManager) {
+    init(webSocketManager: WebSocketManager) {
             self.webSocketManager = webSocketManager
-        }*/
+        }
     
     //Checks is the device has accelerometer
     func checkStatus() {
@@ -43,7 +44,7 @@ class Accelerometer: ObservableObject {
                     self.z = (accData.acceleration.z * 9.80665)
                     
                     let json = self.convertToJSON(x: self.x, y: self.y, z: self.z)
-                    //self.saveToFile(json: json)
+                    self.webSocketManager.send(message: json)
                     
                     /*print("ACELEROMETER DATA: \n")
                     print("X axis:  \(self.x) \n")
@@ -59,25 +60,49 @@ class Accelerometer: ObservableObject {
     }
     
     private func convertToJSON(x: Double, y: Double, z: Double) -> String {
-        let timestamp = Date().timeIntervalSince1970
-        let json: [String: Any] = [
-            "header": [
-                "timestamp": timestamp,
-                "frame": "imu_link"
-            ],
-            "data": [
-                "x": x,
-                "y": y,
-                "z": z
-            ]
-        ]
-        
-        if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
-            return String(data: jsonData, encoding: .utf8) ?? "{}"
-        } else {
-            return "{}"
-        }
-    }
+         let timestamp = Date().timeIntervalSince1970
+         let sec = Int(timestamp)
+         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
+         
+         let json: [String: Any] = [
+             "op": "publish",
+             "topic": "/imu/accel",
+             "msg": [
+                 "header": [
+                     "frame_id": "imu_link",
+                     "stamp": [
+                         "sec": sec,
+                         "nsec": nsec
+                     ]
+                 ],
+                 "orientation": [
+                     "x": 0,
+                     "y": 0,
+                     "z": 0,
+                     "w": 1
+                 ],
+                 "orientation_covariance": [-1,0,0,0,0,0,0,0,0],
+                 "angular_velocity": [
+                     "x": 0,
+                     "y": 0,
+                     "z": 0
+                 ],
+                 "angular_velocity_covariance": [-1,0,0,0,0,0,0,0,0],
+                 "linear_acceleration": [
+                     "x": x,
+                     "y": y,
+                     "z": z
+                 ],
+                 "linear_acceleration_covariance": [-1,0,0,0,0,0,0,0,0]
+             ]
+         ]
+         
+         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+             return String(data: jsonData, encoding: .utf8) ?? "{}"
+         } else {
+             return "{}"
+         }
+     }
     
     /*private func saveToFile(json: String) {
         let appName = Bundle.main.infoDictionary![kCFBundleNameKey as String] as! String

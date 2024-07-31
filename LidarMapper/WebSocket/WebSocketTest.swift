@@ -16,10 +16,9 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     private var url: URL?
     
     override init() {
-        // Replace YOUR_VALID_API_KEY with your actual valid API key
-        //self.url = URL(string: "wss://demo.piesocket.com/v3/channel_123?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self")
-        
-        self.url = URL(string: "ws://127.0.0.1:9090")
+        // IP adress from the internet - chek if iPhone and Mac share the same Wi - Fi
+        // and put IPv4 Adress :9090
+        self.url = URL(string: "ws://10.231.216.101:9090")
         
         // Set the delegate during the URLSession initialization
         self.session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
@@ -83,55 +82,14 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         print("Did Connect to Socket")
         ping()
         receive()
-        send(message: 
-                """
+        send(message:
+            """
             { "op": "advertise",
-             "topic": "/imu/accel",
-             "type": "sensor_msgs/Imu"
-           }
-        """
+                "topic": "/imu/accel",
+                "type": "sensor_msgs/Imu"
+            }
+            """
         )
-        while true {
-            send(message:
-            """
-            {
-              "op": "publish",
-              "topic": "/imu/accel",
-              "msg": {
-                "header": {
-                  "frame_id": "imu_link",
-                  "stamp": {
-                  "sec": XXXX,
-                  "nsec": YYY
-            }
-                },
-                "orientation": {
-                  "x": 0,
-                  "y": 0,
-                  "z": 0,
-                  "w": 1
-                },
-                "orientation_covariance": [-1,0,0,0,0,0,0,0,0],
-                "angular_velocity": {
-                  "x": 0,
-                  "y": 0,
-                  "z": 0
-                },
-                "angular_velocity_covariance": [-1,0,0,0,0,0,0,0,0],
-                "linear_acceleration": {
-                    "x": 0,
-                    "y": 0,
-                    "z": 9.81
-                },
-                "linear_acceleration_covariance": [-1,0,0,0,0,0,0,0,0]
-              }
-            }
-            """
-            )
-            sleep(1)
-
-        }
-
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
