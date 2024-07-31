@@ -19,6 +19,7 @@
 		764724932C57ACC0003CF484 /* WebSocketTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 764724922C57ACC0003CF484 /* WebSocketTest.swift */; };
 		7671DA0C2C4FAE7200E47B17 /* Magnetometer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7671DA0B2C4FAE7100E47B17 /* Magnetometer.swift */; };
 		7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7671DA0E2C4FBD7300E47B17 /* TimerManager.swift */; };
+		7685C2B42C5A9F9D00FEA82A /* CombinedSensorData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +56,7 @@
 		764724922C57ACC0003CF484 /* WebSocketTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebSocketTest.swift; sourceTree = "<group>"; };
 		7671DA0B2C4FAE7100E47B17 /* Magnetometer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Magnetometer.swift; sourceTree = "<group>"; };
 		7671DA0E2C4FBD7300E47B17 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
+		7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedSensorData.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +158,7 @@
 				760B2CA02C4E977500F3AAD0 /* Accelerometer.swift */,
 				7671DA0B2C4FAE7100E47B17 /* Magnetometer.swift */,
 				7601EFE22C5107A900C442F4 /* Gyroscope.swift */,
+				7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */,
 			);
 			path = SensorsTests;
 			sourceTree = "<group>";
@@ -306,6 +309,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7685C2B42C5A9F9D00FEA82A /* CombinedSensorData.swift in Sources */,
 				764724932C57ACC0003CF484 /* WebSocketTest.swift in Sources */,
 				760B2C742C4E906500F3AAD0 /* ContentView.swift in Sources */,
 				7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */,

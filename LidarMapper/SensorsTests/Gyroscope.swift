@@ -14,9 +14,11 @@ class Gyroscope: ObservableObject {
     //Object that manages sensors related to motion
     private var motionManager = CMMotionManager()
     
+    
     @Published var x: Double = 0.0
     @Published var y: Double = 0.0
     @Published var z: Double = 0.0
+    
     
     //Checks if the device has Gyroscope
     func checkStatus() {

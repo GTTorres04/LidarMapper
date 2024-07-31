@@ -13,17 +13,22 @@ import Combine
 class Accelerometer: ObservableObject {
     //Object that manages sensors related to motion
     private var motionManager = CMMotionManager()
-    private var webSocketManager: WebSocketManager
     
-    @Published var x: Double = 0.0
-    @Published var y: Double = 0.0
-    @Published var z: Double = 0.0
+    @Published var webSocketManager: WebSocketManager
     
-    //private weak var webSocketManager: WebSocketManager?
-    
-    init(webSocketManager: WebSocketManager) {
+       //Acc Variables Data
+       @Published var accX: Double = 0.0
+       @Published var accY: Double = 0.0
+       @Published var accZ: Double = 0.0
+       
+       //Gyro Variables Data
+       @Published var gyroX: Double = 0.0
+       @Published var gyroY: Double = 0.0
+       @Published var gyroZ: Double = 0.0
+        
+   init(webSocketManager: WebSocketManager) {
             self.webSocketManager = webSocketManager
-        }
+   }
     
     //Checks is the device has accelerometer
     func checkStatus() {
@@ -39,11 +44,11 @@ class Accelerometer: ObservableObject {
             motionManager.startAccelerometerUpdates(to: OperationQueue.main) { (data, error) in
                 if let accData = data {
                     // A aceleracao esta em Gs. 1G = 9.80665 m/s.^2
-                    self.x = (accData.acceleration.x * 9.80665)
-                    self.y = (accData.acceleration.y * 9.80665)
-                    self.z = (accData.acceleration.z * 9.80665)
+                    self.accX = (accData.acceleration.x * 9.80665)
+                    self.accY = (accData.acceleration.y * 9.80665)
+                    self.accZ = (accData.acceleration.z * 9.80665)
                     
-                    let json = self.convertToJSON(x: self.x, y: self.y, z: self.z)
+                    let json = self.convertToJSON(accX: self.accX, accY: self.accY, accZ: self.accZ)
                     self.webSocketManager.send(message: json)
                     
                     /*print("ACELEROMETER DATA: \n")
@@ -59,14 +64,14 @@ class Accelerometer: ObservableObject {
         }
     }
     
-    private func convertToJSON(x: Double, y: Double, z: Double) -> String {
+    private func convertToJSON(accX: Double, accY: Double, accZ: Double) -> String {
          let timestamp = Date().timeIntervalSince1970
          let sec = Int(timestamp)
          let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
          
          let json: [String: Any] = [
              "op": "publish",
-             "topic": "/imu/accel",
+             "topic": "/imu/accgyro",
              "msg": [
                  "header": [
                      "frame_id": "imu_link",
@@ -89,9 +94,9 @@ class Accelerometer: ObservableObject {
                  ],
                  "angular_velocity_covariance": [-1,0,0,0,0,0,0,0,0],
                  "linear_acceleration": [
-                     "x": x,
-                     "y": y,
-                     "z": z
+                     "x": accX,
+                     "y": accY,
+                     "z": accZ
                  ],
                  "linear_acceleration_covariance": [-1,0,0,0,0,0,0,0,0]
              ]

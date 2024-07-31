@@ -5,7 +5,7 @@
 //  Created by Forestry Robotics UC on 29/07/2024.
 //
 import SwiftUI
-import UIKit
+import Combine
 import Foundation
 
 class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate {
@@ -16,18 +16,12 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     private var url: URL?
     
     override init() {
-        // IP adress from the internet - chek if iPhone and Mac share the same Wi - Fi
-        // and put IPv4 Adress :9090
         self.url = URL(string: "ws://10.231.216.101:9090")
-        
-        // Set the delegate during the URLSession initialization
         self.session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         super.init()
         
-        // Assign the delegate after the super.init()
         self.session = URLSession(configuration: .default, delegate: self, delegateQueue: OperationQueue.main)
         
-        // Initialize and resume the WebSocket connection
         if let url = self.url {
             self.webSocket = session.webSocketTask(with: url)
             self.webSocket?.resume()
@@ -73,7 +67,6 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
                 print("Receive error: \(error)")
             }
             
-            // Call receive again to keep listening for new messages
             self.receive()
         }
     }
@@ -85,8 +78,17 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         send(message:
             """
             { "op": "advertise",
-                "topic": "/imu/accel",
+                "topic": "/imu/accgyro",
                 "type": "sensor_msgs/Imu"
+            }
+            """
+        )
+
+        send(message:
+            """
+            { "op": "advertise",
+                "topic": "/imu/mag",
+                "type": "sensor_msgs/MagneticField"
             }
             """
         )
@@ -96,4 +98,5 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         print("Did close connection with Socket")
     }
 }
+
 

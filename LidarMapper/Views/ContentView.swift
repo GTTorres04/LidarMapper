@@ -12,11 +12,10 @@ import Foundation
 
 struct ContentView: View {
     @StateObject var timerManager = TimerManager()
+    @StateObject var webSocket = WebSocketManager()
     @StateObject private var acc = Accelerometer(webSocketManager: WebSocketManager())
-    
-    @StateObject private var mag = Magnetometer()
+    @StateObject private var mag = Magnetometer(webSocketManager: WebSocketManager())
     @StateObject private var gyro = Gyroscope()
-    @StateObject private var webSocket = WebSocketManager()
     
     var body: some View {
         VStack {
@@ -31,9 +30,9 @@ struct ContentView: View {
             VStack {
                 Text("ACCELEROMETER DATA: ")
                     .font(.title2)
-                Text("X: \(acc.x)")
-                Text("Y: \(acc.y)")
-                Text("Z: \(acc.z)")
+                Text("X: \(acc.accX)")
+                Text("Y: \(acc.accY)")
+                Text("Z: \(acc.accZ)")
                 Text("\n")
                 
                 Text("MAGNETOMETER DATA: ")
@@ -53,10 +52,10 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            //acc.checkStatus()
-            //acc.startAccelerometerUpdates()
-            //mag.checkStatus()
-            //mag.startMagnetometerUpdates()
+            acc.checkStatus()
+            acc.startAccelerometerUpdates()
+            mag.checkStatus()
+            mag.startMagnetometerUpdates()
             //gyro.checkStatus()
             //gyro.startGyroUpdates()
             webSocket.receive()
