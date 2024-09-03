@@ -16,6 +16,7 @@ struct ContentView: View {
     @StateObject private var acc = Accelerometer(webSocketManager: WebSocketManager())
     @StateObject private var mag = Magnetometer(webSocketManager: WebSocketManager())
     @StateObject var gyro = Gyroscope()
+    @StateObject var gps = GPS(WebSocketManager: WebSocketManager())
     
     var body: some View {
         VStack {
@@ -47,6 +48,13 @@ struct ContentView: View {
                 Text("X: \(gyro.x)")
                 Text("Y: \(gyro.y)")
                 Text("Z: \(gyro.z)")
+                Text("\n")
+                
+                Text("GPS DATA: ")
+                    .font(.title2)
+                Text("X: \(gps.latitude)")
+                Text("Y: \(gps.longitude)")
+                Text("Z: \(gps.altitude)")
             }
             .padding()
         }
@@ -58,6 +66,7 @@ struct ContentView: View {
             mag.startMagnetometerUpdates()
             gyro.checkStatus()
             gyro.startGyroUpdates()
+            
             webSocket.receive()
         }
     }
