@@ -55,19 +55,20 @@ struct ContentView: View {
                 Text("Latitude: \(gps.latitude)")
                 Text("Longitude: \(gps.longitude)")
                 Text("Altitude: \(gps.altitude)")
+                Text("Status: \(gps.status)")
             }
             .padding()
         }
         .padding()
         .onAppear {
-            acc.checkStatus()
-            acc.startAccelerometerUpdates()
-            mag.checkStatus()
-            mag.startMagnetometerUpdates()
-            gyro.checkStatus()
-            gyro.startGyroUpdates()
+            //acc.checkStatus()
+            //acc.startAccelerometerUpdates()
+            //mag.checkStatus()
+            //mag.startMagnetometerUpdates()
+            //gyro.checkStatus()
+            //gyro.startGyroUpdates()
             gps.startLocationUpdates()
-            webSocket.receive()
+            //webSocket.receive()
         }
     }
 }
