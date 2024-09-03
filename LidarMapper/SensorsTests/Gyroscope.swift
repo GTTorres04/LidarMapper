@@ -38,9 +38,9 @@ class Gyroscope: ObservableObject {
                     self.z = gyroData.rotationRate.z
                     
                     /*print("GYROSCOPE DATA: \n")
-                    print("X axis:  \(self.x) \n")
-                    print("Y axis:  \(self.y) \n")
-                    print("Z axis:  \(self.z) \n")*/
+                     print("X axis:  \(self.x) \n")
+                     print("Y axis:  \(self.y) \n")
+                     print("Z axis:  \(self.z) \n")*/
                 } else {
                     print("Error: \(String(describing: error?.localizedDescription))")
                 }
@@ -49,6 +49,5 @@ class Gyroscope: ObservableObject {
             print("Gyroscope is not available")
         }
     }
-    
 }
 

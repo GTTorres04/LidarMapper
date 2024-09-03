@@ -35,6 +35,10 @@ class Accelerometer: ObservableObject {
         if !motionManager.isAccelerometerAvailable {
             print("The device doesn't have Accelerometer")
         }
+        
+        if !motionManager.isGyroAvailable {
+            print("The device doesn't have Magnetometer")
+        }
     }
     
     //Accelerometer Data
@@ -48,7 +52,7 @@ class Accelerometer: ObservableObject {
                     self.accY = (accData.acceleration.y * 9.80665)
                     self.accZ = (accData.acceleration.z * 9.80665)
                     
-                    let json = self.convertToJSON(accX: self.accX, accY: self.accY, accZ: self.accZ)
+                    let json = self.convertToJSON(accX: self.accX, accY: self.accY, accZ: self.accZ, gyroX: self.gyroX, gyroY: self.gyroY, gyroZ: self.gyroZ)
                     self.webSocketManager.send(message: json)
                     
                     /*print("ACELEROMETER DATA: \n")
@@ -62,9 +66,30 @@ class Accelerometer: ObservableObject {
         } else {
             print("Accelerometer is not available")
         }
+        
+        //Start Gyroscope Updates
+        if motionManager.isGyroAvailable {
+            motionManager.gyroUpdateInterval = 1.0 / 100.0  // 100 Hz
+            motionManager.startGyroUpdates(to: OperationQueue.main) { (data, error) in
+                if let gyroData = data  {
+                    self.gyroX = gyroData.rotationRate.x
+                    self.gyroY = gyroData.rotationRate.y
+                    self.gyroZ = gyroData.rotationRate.z
+                    
+                    /*print("GYROSCOPE DATA: \n")
+                     print("X axis:  \(self.x) \n")
+                     print("Y axis:  \(self.y) \n")
+                     print("Z axis:  \(self.z) \n")*/
+                } else {
+                    print("Error: \(String(describing: error?.localizedDescription))")
+                }
+            }
+        } else {
+            print("Gyroscope is not available")
+        }
     }
     
-    private func convertToJSON(accX: Double, accY: Double, accZ: Double) -> String {
+    private func convertToJSON(accX: Double, accY: Double, accZ: Double, gyroX: Double, gyroY: Double, gyroZ: Double) -> String {
          let timestamp = Date().timeIntervalSince1970
          let sec = Int(timestamp)
          let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
@@ -88,9 +113,9 @@ class Accelerometer: ObservableObject {
                  ],
                  "orientation_covariance": [-1,0,0,0,0,0,0,0,0],
                  "angular_velocity": [
-                     "x": 0,
-                     "y": 0,
-                     "z": 0
+                     "x": gyroX,
+                     "y": gyroY,
+                     "z": gyroZ
                  ],
                  "angular_velocity_covariance": [-1,0,0,0,0,0,0,0,0],
                  "linear_acceleration": [
