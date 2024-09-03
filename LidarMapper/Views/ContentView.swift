@@ -52,9 +52,9 @@ struct ContentView: View {
                 
                 Text("GPS DATA: ")
                     .font(.title2)
-                Text("X: \(gps.latitude)")
-                Text("Y: \(gps.longitude)")
-                Text("Z: \(gps.altitude)")
+                Text("Latitude: \(gps.latitude)")
+                Text("Longitude: \(gps.longitude)")
+                Text("Altitude: \(gps.altitude)")
             }
             .padding()
         }
@@ -66,7 +66,7 @@ struct ContentView: View {
             mag.startMagnetometerUpdates()
             gyro.checkStatus()
             gyro.startGyroUpdates()
-            
+            gps.startLocationUpdates()
             webSocket.receive()
         }
     }
