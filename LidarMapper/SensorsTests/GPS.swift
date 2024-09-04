@@ -81,8 +81,8 @@ class GPS: NSObject, ObservableObject, CLLocationManagerDelegate {
             
             
             
-            //let json = self?.convertToJSON(latitude: self?.latitude ?? 0.0, longitude: self?.longitude ?? 0.0, altitude: self?.altitude ?? 0.0)
-            //self?.webSocketManager.send(message: json ?? "")
+            let json = self?.convertToJSON(latitude: self?.latitude ?? 0.0, longitude: self?.longitude ?? 0.0, altitude: self?.altitude ?? 0.0, status: self?.status ?? 0)
+            self?.WebSocketManager.send(message: json ?? "")
         }
     }
     
@@ -104,9 +104,9 @@ class GPS: NSObject, ObservableObject, CLLocationManagerDelegate {
                 ],
                 "status": [
                     "status": status,
-                    "service": 
+                    "service": 1 //Não é possível saber o satelite exato
                 ],
-                "latitude": latitude
+                "latitude": latitude,
                     "longitude": longitude,
                 "altitude": altitude,
                 "position_covariance": [-1,0,0,0,0,0,0,0,0],
