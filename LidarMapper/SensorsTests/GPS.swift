@@ -80,7 +80,6 @@ class GPS: NSObject, ObservableObject, CLLocationManagerDelegate {
             }
             
             
-            
             let json = self?.convertToJSON(latitude: self?.latitude ?? 0.0, longitude: self?.longitude ?? 0.0, altitude: self?.altitude ?? 0.0, status: self?.status ?? 0)
             self?.WebSocketManager.send(message: json ?? "")
         }
@@ -91,13 +90,10 @@ class GPS: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     private func convertToJSON(latitude: Double, longitude: Double, altitude: Double, status: Int) -> String {
-        let timestamp = Date().timeIntervalSince1970
-        let sec = Int(timestamp)
-        let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
         
         let json: [String: Any] = [
             "op": "publish",
-            "topic": "/imu/NavSatFix",
+            "topic": "/imu/gps",
             "msg": [
                 "header": [
                     "frame_id": "gps_link"
