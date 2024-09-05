@@ -61,14 +61,14 @@ struct ContentView: View {
         }
         .padding()
         .onAppear {
-            //acc.checkStatus()
-            //acc.startAccelerometerUpdates()
-            //mag.checkStatus()
-            //mag.startMagnetometerUpdates()
-            //gyro.checkStatus()
-            //gyro.startGyroUpdates()
+            acc.checkStatus()
+            acc.startAccelerometerUpdates()
+            mag.checkStatus()
+            mag.startMagnetometerUpdates()
+            gyro.checkStatus()
+            gyro.startGyroUpdates()
             gps.startLocationUpdates()
-            //webSocket.receive()
+            webSocket.receive()
         }
     }
 }

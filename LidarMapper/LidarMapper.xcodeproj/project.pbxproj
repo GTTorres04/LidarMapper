@@ -20,6 +20,7 @@
 		7671DA0C2C4FAE7200E47B17 /* Magnetometer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7671DA0B2C4FAE7100E47B17 /* Magnetometer.swift */; };
 		7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7671DA0E2C4FBD7300E47B17 /* TimerManager.swift */; };
 		7685C2B42C5A9F9D00FEA82A /* CombinedSensorData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */; };
+		76B332012C89CBBF00C48E49 /* Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332002C89CBBF00C48E49 /* Camera.swift */; };
 		76F234492C871A8900B48F6B /* GPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F234482C871A8900B48F6B /* GPS.swift */; };
 /* End PBXBuildFile section */
 
@@ -58,6 +59,7 @@
 		7671DA0B2C4FAE7100E47B17 /* Magnetometer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Magnetometer.swift; sourceTree = "<group>"; };
 		7671DA0E2C4FBD7300E47B17 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedSensorData.swift; sourceTree = "<group>"; };
+		76B332002C89CBBF00C48E49 /* Camera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Camera.swift; sourceTree = "<group>"; };
 		76F234482C871A8900B48F6B /* GPS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPS.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -161,6 +163,7 @@
 				7671DA0B2C4FAE7100E47B17 /* Magnetometer.swift */,
 				7601EFE22C5107A900C442F4 /* Gyroscope.swift */,
 				76F234482C871A8900B48F6B /* GPS.swift */,
+				76B332002C89CBBF00C48E49 /* Camera.swift */,
 				7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */,
 			);
 			path = SensorsTests;
@@ -318,6 +321,7 @@
 				7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */,
 				7671DA0C2C4FAE7200E47B17 /* Magnetometer.swift in Sources */,
 				7601EFE32C5107A900C442F4 /* Gyroscope.swift in Sources */,
+				76B332012C89CBBF00C48E49 /* Camera.swift in Sources */,
 				760B2CA12C4E977500F3AAD0 /* Accelerometer.swift in Sources */,
 				760B2C722C4E906500F3AAD0 /* LidarMapperApp.swift in Sources */,
 				76F234492C871A8900B48F6B /* GPS.swift in Sources */,
@@ -489,6 +493,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LidarMapper/Info.plist;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the device camera.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to display GPS coordinates";
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app requires access to motion data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -522,6 +527,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LidarMapper/Info.plist;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the device camera.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to display GPS coordinates";
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app requires access to motion data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
