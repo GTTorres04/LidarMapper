@@ -101,6 +101,15 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
             }
             """
         )
+        
+        send(message:
+            """
+            { "op": "advertise",
+                "topic": "/imu/camera",
+                "type": "sensor_msgs/Camera
+            }
+            """
+        )
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {

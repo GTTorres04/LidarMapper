@@ -21,6 +21,9 @@
 		7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7671DA0E2C4FBD7300E47B17 /* TimerManager.swift */; };
 		7685C2B42C5A9F9D00FEA82A /* CombinedSensorData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */; };
 		76B332012C89CBBF00C48E49 /* Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332002C89CBBF00C48E49 /* Camera.swift */; };
+		76B332032C89E55400C48E49 /* CMSampleBuffer+Extention.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332022C89E55400C48E49 /* CMSampleBuffer+Extention.swift */; };
+		76B332052C89E8D200C48E49 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332042C89E8D200C48E49 /* ViewModel.swift */; };
+		76B332072C89EED300C48E49 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332062C89EED300C48E49 /* CameraView.swift */; };
 		76F234492C871A8900B48F6B /* GPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F234482C871A8900B48F6B /* GPS.swift */; };
 /* End PBXBuildFile section */
 
@@ -60,6 +63,9 @@
 		7671DA0E2C4FBD7300E47B17 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CombinedSensorData.swift; sourceTree = "<group>"; };
 		76B332002C89CBBF00C48E49 /* Camera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Camera.swift; sourceTree = "<group>"; };
+		76B332022C89E55400C48E49 /* CMSampleBuffer+Extention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CMSampleBuffer+Extention.swift"; sourceTree = "<group>"; };
+		76B332042C89E8D200C48E49 /* ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModel.swift; sourceTree = "<group>"; };
+		76B332062C89EED300C48E49 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		76F234482C871A8900B48F6B /* GPS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPS.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -152,6 +158,8 @@
 			isa = PBXGroup;
 			children = (
 				760B2C732C4E906500F3AAD0 /* ContentView.swift */,
+				76B332042C89E8D200C48E49 /* ViewModel.swift */,
+				76B332062C89EED300C48E49 /* CameraView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -164,6 +172,7 @@
 				7601EFE22C5107A900C442F4 /* Gyroscope.swift */,
 				76F234482C871A8900B48F6B /* GPS.swift */,
 				76B332002C89CBBF00C48E49 /* Camera.swift */,
+				76B332022C89E55400C48E49 /* CMSampleBuffer+Extention.swift */,
 				7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */,
 			);
 			path = SensorsTests;
@@ -317,13 +326,16 @@
 			files = (
 				7685C2B42C5A9F9D00FEA82A /* CombinedSensorData.swift in Sources */,
 				764724932C57ACC0003CF484 /* WebSocketTest.swift in Sources */,
+				76B332072C89EED300C48E49 /* CameraView.swift in Sources */,
 				760B2C742C4E906500F3AAD0 /* ContentView.swift in Sources */,
 				7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */,
+				76B332032C89E55400C48E49 /* CMSampleBuffer+Extention.swift in Sources */,
 				7671DA0C2C4FAE7200E47B17 /* Magnetometer.swift in Sources */,
 				7601EFE32C5107A900C442F4 /* Gyroscope.swift in Sources */,
 				76B332012C89CBBF00C48E49 /* Camera.swift in Sources */,
 				760B2CA12C4E977500F3AAD0 /* Accelerometer.swift in Sources */,
 				760B2C722C4E906500F3AAD0 /* LidarMapperApp.swift in Sources */,
+				76B332052C89E8D200C48E49 /* ViewModel.swift in Sources */,
 				76F234492C871A8900B48F6B /* GPS.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
