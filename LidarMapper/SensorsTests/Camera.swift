@@ -12,46 +12,18 @@ import UIKit
 class Camera: NSObject {
     
     private let captureSession = AVCaptureSession()
-    
     private var deviceInput: AVCaptureDeviceInput?
-    
     private var videoOutput: AVCaptureVideoDataOutput?
-    
     private let systemPreferredCamera = AVCaptureDevice.default(for: .video)
-    
     private var sessionQueue = DispatchQueue(label: "video.preview.session")
+    @Published var webSocketManager: WebSocketManager
+    @Published var image: CGImage?
     
-    
-    
-    private var isAuthorized: Bool {
-        get async {
-            let status = AVCaptureDevice.authorizationStatus(for: .video)
-            
-            // Determine if the user previously authorized camera access.
-            var isAuthorized = status == .authorized
-            
-            // If the system hasn't determined the user's authorization status,
-            // explicitly prompt them for approval.
-            if status == .notDetermined {
-                isAuthorized = await AVCaptureDevice.requestAccess(for: .video)
-            }
-            return isAuthorized
-        }
-    }
-    
-    
-    private var addToPreviewStream: ((CGImage) -> Void)?
-    
-    lazy var previewStream: AsyncStream<CGImage> = {
-        AsyncStream { continuation in
-            addToPreviewStream = { cgImage in
-                continuation.yield(cgImage)
-            }
-        }
-    }()
-    
-    
-    override init() {
+    init(webSocketManager: WebSocketManager) {
+        self.webSocketManager = webSocketManager
+        self.image = nil // Initialize image (or any other uninitialized properties)
+        
+        // Ensure all properties are initialized before capturing `self` in the Task closure
         super.init()
         
         Task {
@@ -61,45 +33,52 @@ class Camera: NSObject {
     }
     
     private func configureSession() async {
-        guard await isAuthorized,
-                 let systemPreferredCamera,
-                 let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera)
-           else { return }
+        guard let systemPreferredCamera,
+              let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera)
+        else { return }
         
         captureSession.beginConfiguration()
         
         defer {
-                self.captureSession.commitConfiguration()
+            captureSession.commitConfiguration()
         }
         
         let videoOutput = AVCaptureVideoDataOutput()
         videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
-            
-        guard captureSession.canAddInput(deviceInput) else {
-                print("Unable to add device input to capture session.")
-                return
+        
+        if captureSession.canAddInput(deviceInput) && captureSession.canAddOutput(videoOutput) {
+            captureSession.addInput(deviceInput)
+            captureSession.addOutput(videoOutput)
+        } else {
+            print("Error: Unable to add input/output to capture session.")
         }
-        
-        guard captureSession.canAddOutput(videoOutput) else {
-                print("Unable to add video output to capture session.")
-                return
-        }
-        
-        captureSession.addInput(deviceInput)
-        captureSession.addOutput(videoOutput)
-        
     }
     
     private func startSession() async {
-        guard await isAuthorized else { return }
         captureSession.startRunning()
     }
     
-    private func convertToJSON(x: Double, y: Double, z: Double) -> String {
+    // Converts CGImage to Data and prepares JSON message
+    private func publishImageToROS(_ cgImage: CGImage) {
+        guard let imageData = cgImageToData(cgImage) else { return }
+    }
+    // Convert CGImage to PNG Data
+    func cgImageToData(_ cgImage: CGImage) -> Data? {
+        let uiImage = UIImage(cgImage: cgImage)
+
+        return uiImage.pngData()
+    }
+    
+
+    
+    
+    private func convertToJSON(array: String) -> String {
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
-
+        
+        let array = [UInt8](cgImageToData(CGImage.self as! CGImage)!)
+        
         let json: [String: Any] = [
             "op": "publish",
             "topic": "/imu/camera",
@@ -111,32 +90,31 @@ class Camera: NSObject {
                         "nsec": nsec
                     ]
                 ],
-                "resolution": [
-                    "height": cgImage.height,
-                    "width": cgImage.width,
-                    "encoding": "jpeg",  // You can change to "rgb8" or other encodings as needed
-                    "is_bigendian": 0,
-                    "step": cgImage.bytesPerRow,
-                    "data": imageData.base64EncodedString()
-            ]
+                "format": "png",
+                "data": array
+            ],
         ]
-
+        
         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             return String(data: jsonData, encoding: .utf8) ?? "{}"
         } else {
             return "{}"
         }
     }
-   
 }
 
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
-    
-    func captureOutput(_ output: AVCaptureOutput,
-                       didOutput sampleBuffer: CMSampleBuffer,
-                       from connection: AVCaptureConnection) {
-        guard let currentFrame = sampleBuffer.cgImage else { return }
-        addToPreviewStream?(currentFrame)
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        if let cgImage = sampleBuffer.cgImage {
+            let uiImage = UIImage(cgImage: cgImage)
+            let imageData = uiImage.pngData()?.base64EncodedString() ?? ""
+            
+            let json = self.convertToJSON(array: imageData)
+            self.webSocketManager.send(message: json)
+        } else {
+            print("Error converting CMSampleBuffer to CGImage")
+        }
     }
-    
 }
+
+    

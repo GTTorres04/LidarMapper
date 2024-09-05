@@ -15,7 +15,6 @@ extension CMSampleBuffer {
         guard let imagePixelBuffer = pixelBuffer else {
             return nil
         }
-        
         return CIImage(cvPixelBuffer: imagePixelBuffer).cgImage
     }
 }
