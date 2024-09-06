@@ -12,7 +12,7 @@ import Observation
 @Observable
 class ViewModel {
     var currentFrame: CGImage?
-    private let camera = Camera()
+    private let camera = Camera(webSocketManager: WebSocketManager())
     
     init() {
         Task {

@@ -59,9 +59,22 @@ class Camera: NSObject {
     }
     
     // Converts CGImage to Data and prepares JSON message
-    private func publishImageToROS(_ cgImage: CGImage) {
-        guard let imageData = cgImageToData(cgImage) else { return }
-    }
+    //private func publishImageToROS(_ cgImage: CGImage) {
+        //guard cgImageToData(cgImage) != nil else { return }
+    //}
+    
+    private var addToPreviewStream: ((CGImage) -> Void)?
+        
+        lazy var previewStream: AsyncStream<CGImage> = {
+            AsyncStream { continuation in
+                addToPreviewStream = { cgImage in
+                    continuation.yield(cgImage)
+                }
+            }
+        }()
+    
+    
+    
     // Convert CGImage to PNG Data
     func cgImageToData(_ cgImage: CGImage) -> Data? {
         let uiImage = UIImage(cgImage: cgImage)
@@ -77,11 +90,12 @@ class Camera: NSObject {
         let sec = Int(timestamp)
         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
         
-        let array = [UInt8](cgImageToData(CGImage.self as! CGImage)!)
+        //let array = [UInt8](cgImageToData(CGImage.self as! CGImage)!)
+        
         
         let json: [String: Any] = [
             "op": "publish",
-            "topic": "/imu/camera",
+            "topic": "/camera",
             "msg": [
                 "header": [
                     "frame_id": "camera",
@@ -106,11 +120,14 @@ class Camera: NSObject {
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         if let cgImage = sampleBuffer.cgImage {
-            let uiImage = UIImage(cgImage: cgImage)
-            let imageData = uiImage.pngData()?.base64EncodedString() ?? ""
-            
-            let json = self.convertToJSON(array: imageData)
-            self.webSocketManager.send(message: json)
+            // Convert CGImage to Data and then to a UInt8 array
+            if let imageData = cgImageToData(cgImage) {
+                _ = [UInt8](imageData)
+                _ = self.convertToJSON(array: imageData.base64EncodedString())
+                //self.webSocketManager.send(message: json)
+            } else {
+                print("Error converting CGImage to Data")
+            }
         } else {
             print("Error converting CMSampleBuffer to CGImage")
         }

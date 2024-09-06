@@ -105,7 +105,7 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
         send(message:
             """
             { "op": "advertise",
-                "topic": "/imu/camera",
+                "topic": "/camera",
                 "type": "sensor_msgs/Camera
             }
             """
