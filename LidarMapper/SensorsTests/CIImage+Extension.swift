@@ -18,7 +18,7 @@ extension CIImage {
         
         return cgImage
     }
-    
+
 }
 
 

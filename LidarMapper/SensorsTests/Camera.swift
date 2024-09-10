@@ -85,7 +85,7 @@ class Camera: NSObject {
 
     
     
-    private func convertToJSON(array: String) -> String {
+    private func convertToJSON(imageData: Data, height: Int, width: Int, encoding: String, step: Int) -> String {
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
@@ -95,19 +95,23 @@ class Camera: NSObject {
         
         let json: [String: Any] = [
             "op": "publish",
-            "topic": "/camera",
-            "msg": [
-                "header": [
-                    "frame_id": "camera",
-                    "stamp": [
-                        "sec": sec,
-                        "nsec": nsec
+                    "topic": "/camera",
+                    "msg": [
+                        "header": [
+                            "frame_id": "camera",
+                            "stamp": [
+                                "sec": sec,
+                                "nsec": nsec
+                            ]
+                        ],
+                        "height": height,
+                        "width": width,
+                        "encoding": encoding,  // "rgb8"
+                        "is_bigendian": 0,
+                        "step": step,
+                        "data": imageData.base64EncodedString()
                     ]
-                ],
-                "format": "png",
-                "data": array
-            ],
-        ]
+                ]
         
         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             return String(data: jsonData, encoding: .utf8) ?? "{}"
@@ -120,11 +124,14 @@ class Camera: NSObject {
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         if let cgImage = sampleBuffer.cgImage {
-            // Convert CGImage to Data and then to a UInt8 array
             if let imageData = cgImageToData(cgImage) {
-                _ = [UInt8](imageData)
-                _ = self.convertToJSON(array: imageData.base64EncodedString())
-                //self.webSocketManager.send(message: json)
+                let width = cgImage.width
+                let height = cgImage.height
+                let encoding = "rgb8"  // Assuming the image is RGB
+                let step = width * 3    // 3 bytes per pixel for RGB
+
+                let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
+                self.webSocketManager.send(message: json)
             } else {
                 print("Error converting CGImage to Data")
             }
