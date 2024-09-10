@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct CameraView: View {
     
     @Binding var image: CGImage?
+    @State  var viewModel = ViewModel()
     
     var body: some View {
         GeometryReader { geometry in

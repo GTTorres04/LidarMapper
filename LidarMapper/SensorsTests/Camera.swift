@@ -9,19 +9,22 @@ import Foundation
 import AVFoundation
 import UIKit
 
-class Camera: NSObject {
+class Camera: NSObject, ObservableObject {
     
     private let captureSession = AVCaptureSession()
     private var deviceInput: AVCaptureDeviceInput?
     private var videoOutput: AVCaptureVideoDataOutput?
     private let systemPreferredCamera = AVCaptureDevice.default(for: .video)
     private var sessionQueue = DispatchQueue(label: "video.preview.session")
+    var G: CGColorSpace
+    var j: CGBitmapInfo
     @Published var webSocketManager: WebSocketManager
     @Published var image: CGImage?
     
     init(webSocketManager: WebSocketManager) {
         self.webSocketManager = webSocketManager
         self.image = nil // Initialize image (or any other uninitialized properties)
+        super.init(cgColorSpace: CGColorSpace)
         
         // Ensure all properties are initialized before capturing `self` in the Task closure
         super.init()
@@ -122,13 +125,22 @@ class Camera: NSObject {
 }
 
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
+    
+    func printState() {
+        print(G)
+        print(j)
+    }
+    
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         if let cgImage = sampleBuffer.cgImage {
             if let imageData = cgImageToData(cgImage) {
                 let width = cgImage.width
                 let height = cgImage.height
-                let encoding = "rgb8"  // Assuming the image is RGB
+                let encoding = "rgba8"  // Assuming the image is RGB
                 let step = width * 3    // 3 bytes per pixel for RGB
+                G = cgImage.colorSpace ?? 0 as! CGColorSpace
+                j = cgImage.bitmapInfo
+                
 
                 let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
                 self.webSocketManager.send(message: json)

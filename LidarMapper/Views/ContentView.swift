@@ -9,6 +9,7 @@ import SwiftUI
 import CoreMotion
 import Combine
 import Foundation
+import AVFoundation
 
 struct ContentView: View {
     @StateObject var timerManager = TimerManager()
@@ -18,7 +19,9 @@ struct ContentView: View {
     @StateObject var gyro = Gyroscope()
     @StateObject var gps = GPS(WebSocketManager: WebSocketManager())
     
-    @State private var viewModel = ViewModel()
+    @State  var viewModel = ViewModel()
+    @StateObject var camera = Camera(webSocketManager: WebSocketManager())
+    
     
     // State to toggle between views
     //@State private var showCameraView = true
@@ -87,14 +90,15 @@ struct ContentView: View {
                     }
                     .padding()
                     .onAppear {
-                        acc.checkStatus()
-                        acc.startAccelerometerUpdates()
-                        mag.checkStatus()
-                        mag.startMagnetometerUpdates()
-                        gyro.checkStatus()
-                        gyro.startGyroUpdates()
-                        gps.startLocationUpdates()
+                        //acc.checkStatus()
+                        //acc.startAccelerometerUpdates()
+                        //mag.checkStatus()
+                        //mag.startMagnetometerUpdates()
+                        //gyro.checkStatus()
+                        //gyro.startGyroUpdates()
+                        //gps.startLocationUpdates()
                         webSocket.receive()
+                        camera.printState()
                     }
                 }
             }
