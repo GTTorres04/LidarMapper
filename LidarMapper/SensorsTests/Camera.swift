@@ -16,15 +16,15 @@ class Camera: NSObject, ObservableObject {
     private var videoOutput: AVCaptureVideoDataOutput?
     private let systemPreferredCamera = AVCaptureDevice.default(for: .video)
     private var sessionQueue = DispatchQueue(label: "video.preview.session")
-    var G: CGColorSpace
-    var j: CGBitmapInfo
+    var G: CGColorSpace = CGColorSpaceCreateDeviceRGB()
+    var j: CGBitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
     @Published var webSocketManager: WebSocketManager
     @Published var image: CGImage?
     
     init(webSocketManager: WebSocketManager) {
         self.webSocketManager = webSocketManager
         self.image = nil // Initialize image (or any other uninitialized properties)
-        super.init(cgColorSpace: CGColorSpace)
+       
         
         // Ensure all properties are initialized before capturing `self` in the Task closure
         super.init()
@@ -87,7 +87,6 @@ class Camera: NSObject, ObservableObject {
     
 
     
-    
     private func convertToJSON(imageData: Data, height: Int, width: Int, encoding: String, step: Int) -> String {
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
@@ -129,6 +128,7 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     func printState() {
         print(G)
         print(j)
+        print()
     }
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
