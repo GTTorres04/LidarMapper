@@ -4,14 +4,13 @@
 //
 //  Created by Forestry Robotics UC on 05/09/2024.
 //
-
 import Foundation
+import Combine
 import CoreImage
-import Observation
 
-@Observable
-class ViewModel {
-    var currentFrame: CGImage?
+class ViewModel: ObservableObject {  // Must conform to ObservableObject
+    @Published var currentFrame: CGImage?  // Published stored property
+    
     let camera = Camera(webSocketManager: WebSocketManager())
     
     init() {
@@ -20,12 +19,13 @@ class ViewModel {
         }
     }
     
+    // Handles camera previews
     func handleCameraPreviews() async {
         for await image in camera.previewStream {
             Task { @MainActor in
-                currentFrame = image
+                self.currentFrame = image  // This updates the UI
             }
         }
     }
-    
 }
+

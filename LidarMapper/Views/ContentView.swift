@@ -98,7 +98,6 @@ struct ContentView: View {
                         //gyro.startGyroUpdates()
                         //gps.startLocationUpdates()
                         webSocket.receive()
-                        camera.printState()
                     }
                 }
             }
