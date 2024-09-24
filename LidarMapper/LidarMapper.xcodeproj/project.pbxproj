@@ -509,7 +509,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LidarMapper/Info.plist;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the device camera.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "e need access to the camera to display the video feed.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to display GPS coordinates";
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app requires access to motion data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -543,7 +543,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = LidarMapper/Info.plist;
 				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app requires access to the device camera.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "e need access to the camera to display the video feed.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need your location to display GPS coordinates";
 				INFOPLIST_KEY_NSMotionUsageDescription = "This app requires access to motion data.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

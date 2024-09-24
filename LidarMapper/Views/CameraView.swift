@@ -15,12 +15,12 @@ struct CameraView: View {
     var body: some View {
         GeometryReader { geometry in
             if let image = viewModel.currentFrame {
-                Image(decorative: image, scale: 1)
+                Image(image, scale: 1, label: Text("Camera Feed"))
                     .resizable()
                     .scaledToFit()
                     .frame(width: geometry.size.width, height: geometry.size.height)
             } else {
-                ContentUnavailableView("No camera feed", systemImage: "xmark.circle.fill")
+                Text("No camera feed")
                     .frame(width: geometry.size.width, height: geometry.size.height)
             }
         }
@@ -31,5 +31,6 @@ struct CameraView: View {
         }
     }
 }
+
 
 
