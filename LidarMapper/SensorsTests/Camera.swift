@@ -22,6 +22,7 @@ class Camera: NSObject, ObservableObject {
     @Published var webSocketManager: WebSocketManager
     @Published var image: CGImage?
     
+    
     init(webSocketManager: WebSocketManager) {
         self.webSocketManager = webSocketManager
         super.init()
@@ -101,8 +102,8 @@ class Camera: NSObject, ObservableObject {
             return nil
         }
         
-        do {
-            free(pixelData)  // Free the memory when done
+        defer {
+            free(pixelData)  // Ensure memory is freed when done
         }
         
         // Create the bitmap context with the pixel data buffer
@@ -116,10 +117,16 @@ class Camera: NSObject, ObservableObject {
             print("Error: Unable to create bitmap context")
             return nil
         }
+        
+        // Draw the CGImage into the context (this renders the image into pixelData)
+        context.draw(imageRef, in: CGRect(x: 0, y: 0, width: CGFloat(width), height: CGFloat(height)))
+        
         // Convert the pixel data to a Data object
         let data = Data(bytes: pixelData, count: width * height * 4)
-        return (context as! Data)
+        
+        return data
     }
+
     
     private func convertToJSON(imageData: Data, height: Int, width: Int, encoding: String, step: Int) -> String {
         let timestamp = Date().timeIntervalSince1970
@@ -127,7 +134,14 @@ class Camera: NSObject, ObservableObject {
         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
         let image_array = [UInt8](imageData)
         
-        print(image_array.max())
+        if let maxValue = image_array.max() {
+                print("Max byte value in image data: \(maxValue)")
+            } else {
+                print("Error: image array is empty.")
+            }
+            print("Image data byte count: \(image_array.count)")
+        
+        
         print(image_array.count)
         
         let json: [String: Any] = [
@@ -181,7 +195,7 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         if let imageData = cgImageToData(cgImage) {
             let width = cgImage.width
             let height = cgImage.height
-            let encoding = "rgb16"
+            let encoding = "rgba8"
             let step = width * 4 // Assuming 4 bytes per pixel
             
             let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
