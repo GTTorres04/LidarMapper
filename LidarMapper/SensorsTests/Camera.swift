@@ -22,6 +22,9 @@ class Camera: NSObject, ObservableObject {
     @Published var webSocketManager: WebSocketManager
     @Published var image: CGImage?
     
+    //Measuring the time each function takes to execute
+   
+    
     
     init(webSocketManager: WebSocketManager) {
         self.webSocketManager = webSocketManager
@@ -34,6 +37,9 @@ class Camera: NSObject, ObservableObject {
     }
     
     private func configureSession() async {
+        
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
         guard let systemPreferredCamera,
               let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera)
         else { return }
@@ -56,11 +62,20 @@ class Camera: NSObject, ObservableObject {
         } else {
             print("Error: Unable to add input/output to capture session.")
         }
+        let endTime = CFAbsoluteTimeGetCurrent()
+        // Print the execution time
+        let executionTime = endTime - startTime
+        print("Execution time for configureSession: \(executionTime) seconds")
+        
     }
     
     
     private func startSession() async {
+        let startTime = CFAbsoluteTimeGetCurrent()
         captureSession.startRunning()
+        let endTime = CFAbsoluteTimeGetCurrent()
+        let executionTime = endTime - startTime
+        print("Execution time for startSession: \(executionTime) seconds")
     }
     
     private var addToPreviewStream: ((CGImage) -> Void)?
@@ -74,6 +89,8 @@ class Camera: NSObject, ObservableObject {
     }()
     
     func cgImageToData(_ cgImage: CGImage) -> Data? {
+        
+        let startTime = CFAbsoluteTimeGetCurrent()
         // Create a UIImage from the CGImage
         let image = UIImage(cgImage: cgImage)
         
@@ -115,6 +132,7 @@ class Camera: NSObject, ObservableObject {
                                       space: colorSpace,
                                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else {
             print("Error: Unable to create bitmap context")
+            
             return nil
         }
         
@@ -123,6 +141,10 @@ class Camera: NSObject, ObservableObject {
         
         // Convert the pixel data to a Data object
         let data = Data(bytes: pixelData, count: width * height * 4)
+        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        let executionTime = endTime - startTime
+        print("Execution time for cgImageToData: \(executionTime) seconds")
         
         return data
     }
@@ -175,7 +197,6 @@ class Camera: NSObject, ObservableObject {
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        print("Frame captured!")
         
         // Check if we can convert to CGImage
         guard let cgImage = sampleBuffer.cgImage else {
@@ -183,8 +204,6 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
             return
         }
         
-        // For debugging purposes, let's log the width and height
-        print("Image captured: \(cgImage.width) x \(cgImage.height)")
         
         // Dispatch the captured image to the main thread for the preview stream
         DispatchQueue.main.async {
