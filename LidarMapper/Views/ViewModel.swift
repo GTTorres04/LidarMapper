@@ -22,7 +22,7 @@ class ViewModel: ObservableObject {  // Must conform to ObservableObject
     // Handles camera previews
     func handleCameraPreviews() async {
         for await image in camera.previewStream {
-            print("Received a new frame")
+            //print("Received a new frame")
             Task { @MainActor in
                 self.currentFrame = image  // This updates the UI
             }

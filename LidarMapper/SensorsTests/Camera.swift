@@ -24,7 +24,7 @@ class Camera: NSObject, ObservableObject {
     
     //Measuring the time each function takes to execute
    
-    
+    //captureOutput func is the one that takes more time to execute.
     
     init(webSocketManager: WebSocketManager) {
         self.webSocketManager = webSocketManager
@@ -151,20 +151,22 @@ class Camera: NSObject, ObservableObject {
 
     
     private func convertToJSON(imageData: Data, height: Int, width: Int, encoding: String, step: Int) -> String {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
         let image_array = [UInt8](imageData)
         
-        if let maxValue = image_array.max() {
+       /* if let maxValue = image_array.max() {
                 print("Max byte value in image data: \(maxValue)")
             } else {
                 print("Error: image array is empty.")
-            }
-            print("Image data byte count: \(image_array.count)")
+            }*/
+            //print("Image data byte count: \(image_array.count)")
         
         
-        print(image_array.count)
+        //print(image_array.count)
         
         let json: [String: Any] = [
             "op": "publish",
@@ -185,7 +187,10 @@ class Camera: NSObject, ObservableObject {
                 "data": image_array
             ]
         ]
-        
+        let endTime = CFAbsoluteTimeGetCurrent()
+        let executionTime = endTime - startTime
+        print("Execution time for convertToJSON: \(executionTime) seconds")
+
         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             return String(data: jsonData, encoding: .utf8) ?? "{}"
         } else {
@@ -198,31 +203,50 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-        // Check if we can convert to CGImage
-        guard let cgImage = sampleBuffer.cgImage else {
-            print("Error converting CMSampleBuffer to CGImage")
-            return
-        }
+        let startTime = CFAbsoluteTimeGetCurrent()
         
-        
-        // Dispatch the captured image to the main thread for the preview stream
-        DispatchQueue.main.async {
-            self.addToPreviewStream?(cgImage)
-        }
-        
-        // Send the image to WebSocket (optional, if it's for ROS)
-        if let imageData = cgImageToData(cgImage) {
-            let width = cgImage.width
-            let height = cgImage.height
-            let encoding = "rgba8"
-            let step = width * 4 // Assuming 4 bytes per pixel
+        // Convert to CGImage in background queue to avoid blocking the main thread
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let cgImage = sampleBuffer.cgImage else {
+                print("Error converting CMSampleBuffer to CGImage")
+                return
+            }
             
-            let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
-            self.webSocketManager.send(message: json)
-        } else {
-            print("Error converting CGImage to Data")
+            // Dispatch the captured image to the main thread for the preview stream
+            DispatchQueue.main.async {
+                self?.addToPreviewStream?(cgImage)
+            }
+            
+            // Process the image (e.g., send it over WebSocket) on a background thread
+            DispatchQueue.global(qos: .background).async { [weak self] in
+                guard let imageData = self?.cgImageToData(cgImage) else {
+                    print("Error converting CGImage to Data")
+                    return
+                }
+                
+                let width = cgImage.width
+                let height = cgImage.height
+                let encoding = "rgba8"
+                let step = width * 4 // Assuming 4 bytes per pixel
+                
+                let json = self?.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
+                
+                // Ensure the WebSocketManager send is executed on the main thread (if necessary)
+                DispatchQueue.main.async {
+                    if let json = json {
+                        self?.webSocketManager.send(message: json)
+                    } else {
+                        print("Error: JSON is nil")
+                    }
+                }
+            }
+            
+            let endTime = CFAbsoluteTimeGetCurrent()
+            let executionTime = endTime - startTime
+            print("Execution time for captureOutput: \(executionTime) seconds")
         }
     }
+
 }
 
 
