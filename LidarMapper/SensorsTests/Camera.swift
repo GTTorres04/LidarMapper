@@ -21,7 +21,7 @@ class Camera: NSObject, ObservableObject {
     @Published var webSocketManager = WebSocketManager()
     
     var lastFrameTime: CFAbsoluteTime = 0
-    let frameInterval: CFAbsoluteTime = 1 // 1 frame per second
+    let frameInterval: CFAbsoluteTime = 1.0 / 15.0 // 15 FPS
 
     init(webSocketManager: WebSocketManager) {
         super.init()
@@ -81,10 +81,10 @@ class Camera: NSObject, ObservableObject {
     }
 }
 
+
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        
+     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let currentTime = CFAbsoluteTimeGetCurrent()
         
         // Skip frames if they are too close in time
@@ -93,29 +93,41 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         lastFrameTime = currentTime
         
-        // Convert the sample buffer to a CGImage
-        guard let cgImage = cgImageFromSampleBuffer(sampleBuffer) else {
-            print("Error converting CMSampleBuffer to CGImage")
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            print("Error getting pixel buffer from sampleBuffer")
             return
         }
         
-        // Dispatch the captured image to the main thread for the preview stream
-        DispatchQueue.main.async {
-            self.image = cgImage  // Update the published image to display
-            self.addToPreviewStream?(cgImage)
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        
+        // Process the image into CGImage
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        let context = CIContext(options: nil)
+        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
+            print("Error creating CGImage")
+            CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
+            return
         }
         
-        // If you still want to send the image to WebSocket
-        if let imageData = cgImageToData(cgImage) {
-            let width = cgImage.width
-            let height = cgImage.height
-            let encoding = "rgba8"
-            let step = width * 4 // Assuming 4 bytes per pixel
+        CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
+        
+        DispatchQueue.global(qos: .background).async {
+            // This method should now be faster due to the above optimizations
+            self.addToPreviewStream?(cgImage)
             
-            let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
-            self.webSocketManager.send(message: json)  // Assuming you want to send this over WebSocket
+            // Optional: Compress and send over WebSocket
+            if let imageData = self.cgImageToData(cgImage) {
+                let width = cgImage.width
+                let height = cgImage.height
+                let encoding = "rgba8"
+                let step = width * 4 // Assuming 4 bytes per pixel
+                
+                let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
+                self.webSocketManager.send(message: json) // Send this in background to avoid blocking
+            }
         }
     }
+
     
     private func cgImageToData(_ cgImage: CGImage) -> Data? {
         let width = cgImage.width
