@@ -14,15 +14,18 @@ class Camera: NSObject, ObservableObject {
     private var deviceInput: AVCaptureDeviceInput?
     private var videoOutput: AVCaptureVideoDataOutput?
     private let systemPreferredCamera = AVCaptureDevice.default(for: .video)
-    private var sessionQueue = DispatchQueue(label: "video.preview.session")
+    private let sessionQueue = DispatchQueue(label: "video.preview.session")
     
     @Published var image: CGImage?
     var addToPreviewStream: ((CGImage) -> Void)?
     @Published var webSocketManager = WebSocketManager()
     
-    var lastFrameTime: CFAbsoluteTime = 0
-    let frameInterval: CFAbsoluteTime = 1.0 / 15.0 // 15 FPS
-
+    private var lastFrameTime: CFAbsoluteTime = 0
+    private var frameInterval: CFAbsoluteTime = 1.0 / 30.0 // 30 FPS target
+    
+    private let frameProcessingQueue = DispatchQueue(label: "frame.processing.queue", qos: .userInitiated)
+    private let ciContext = CIContext()
+    
     init(webSocketManager: WebSocketManager) {
         super.init()
         self.webSocketManager = webSocketManager
@@ -38,11 +41,10 @@ class Camera: NSObject, ObservableObject {
               let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera) else { return }
 
         captureSession.beginConfiguration()
-        
         defer {
             captureSession.commitConfiguration()
         }
-        // Camera Resolution
+        // Try lowering the camera resolution for testing
         captureSession.sessionPreset = .medium
         
         let videoOutput = AVCaptureVideoDataOutput()
@@ -61,73 +63,60 @@ class Camera: NSObject, ObservableObject {
     }
     
     lazy var previewStream: AsyncStream<CGImage> = {
-            AsyncStream { continuation in
-                addToPreviewStream = { cgImage in
-                    continuation.yield(cgImage)
-                }
+        AsyncStream { continuation in
+            addToPreviewStream = { cgImage in
+                continuation.yield(cgImage)
             }
-        }()
-    
-    // Converting CMSampleBuffer to CGImage
-    private func cgImageFromSampleBuffer(_ sampleBuffer: CMSampleBuffer) -> CGImage? {
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            print("Error: Could not get image buffer from sampleBuffer")
-            return nil
         }
-        
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let context = CIContext()
-        return context.createCGImage(ciImage, from: ciImage.extent)
-    }
+    }()
 }
 
 
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     
-     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let currentTime = CFAbsoluteTimeGetCurrent()
         
         // Skip frames if they are too close in time
-        guard currentTime - lastFrameTime >= frameInterval else {
-            return
-        }
+        guard currentTime - lastFrameTime >= frameInterval else { return }
         lastFrameTime = currentTime
         
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            print("Error getting pixel buffer from sampleBuffer")
-            return
-        }
-        
-        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
-        
-        // Process the image into CGImage
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let context = CIContext(options: nil)
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
-            print("Error creating CGImage")
+        frameProcessingQueue.async { [weak self] in
+            guard let self = self else { return }
+
+            guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+                print("Error: Could not get image buffer from sampleBuffer")
+                return
+            }
+            
+            CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+            
+            let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+            guard let cgImage = self.ciContext.createCGImage(ciImage, from: ciImage.extent) else {
+                print("Error creating CGImage")
+                CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
+                return
+            }
+            
             CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
-            return
-        }
-        
-        CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
-        
-        DispatchQueue.global(qos: .background).async {
-            // This method should now be faster due to the above optimizations
+            
+            // Send to preview stream
             self.addToPreviewStream?(cgImage)
             
-            // Optional: Compress and send over WebSocket
+            // Compress and send over WebSocket in the background
             if let imageData = self.cgImageToData(cgImage) {
-                let width = cgImage.width
-                let height = cgImage.height
-                let encoding = "rgba8"
-                let step = width * 4 // Assuming 4 bytes per pixel
-                
-                let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
-                self.webSocketManager.send(message: json) // Send this in background to avoid blocking
+                self.frameProcessingQueue.async {
+                    let width = cgImage.width
+                    let height = cgImage.height
+                    let encoding = "rgba8"
+                    let step = width * 4
+                    
+                    let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
+                    self.webSocketManager.send(message: json)
+                }
             }
         }
     }
-
     
     private func cgImageToData(_ cgImage: CGImage) -> Data? {
         let width = cgImage.width
@@ -186,3 +175,5 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
 }
+
+
