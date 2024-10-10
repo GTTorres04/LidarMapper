@@ -21,9 +21,8 @@ class Camera: NSObject, ObservableObject {
     @Published var webSocketManager = WebSocketManager()
     
     private var lastFrameTime: CFAbsoluteTime = 0
-    private var frameInterval: CFAbsoluteTime = 1.0 / 30.0 // 30 FPS target
+    private var frameInterval: CFAbsoluteTime = 1.0 / 15.0 // 15 FPS target
     
-    private let frameProcessingQueue = DispatchQueue(label: "frame.processing.queue", qos: .userInitiated)
     private let ciContext = CIContext()
     
     init(webSocketManager: WebSocketManager) {
@@ -35,11 +34,11 @@ class Camera: NSObject, ObservableObject {
             await startSession()
         }
     }
-
+    
     private func configureSession() async {
         guard let systemPreferredCamera,
               let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera) else { return }
-
+        
         captureSession.beginConfiguration()
         defer {
             captureSession.commitConfiguration()
@@ -49,7 +48,7 @@ class Camera: NSObject, ObservableObject {
         
         let videoOutput = AVCaptureVideoDataOutput()
         videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
-
+        
         if captureSession.canAddInput(deviceInput) && captureSession.canAddOutput(videoOutput) {
             captureSession.addInput(deviceInput)
             captureSession.addOutput(videoOutput)
@@ -59,7 +58,21 @@ class Camera: NSObject, ObservableObject {
     }
     
     func startSession() async {
-        captureSession.startRunning()
+        guard !captureSession.isRunning else { return }
+        
+        await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                self?.captureSession.startRunning()
+                continuation.resume()
+            }
+        }
+    }
+    
+    func stopSession() {
+        if captureSession.isRunning {
+            captureSession.stopRunning()
+            clearMemory() // Clean up resources when stopping
+        }
     }
     
     lazy var previewStream: AsyncStream<CGImage> = {
@@ -69,6 +82,22 @@ class Camera: NSObject, ObservableObject {
             }
         }
     }()
+    
+    private func cgImageFromSampleBuffer(_ sampleBuffer: CMSampleBuffer) -> CGImage? {
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            print("Error: Could not get image buffer from sampleBuffer")
+            return nil
+        }
+        
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        return ciContext.createCGImage(ciImage, from: ciImage.extent)
+    }
+    func clearMemory() {
+        // Clear any residual data stored in image buffers (if necessary)
+        self.image = nil
+        // Reset last frame time if needed
+        self.lastFrameTime = 0
+    }
 }
 
 
@@ -81,44 +110,73 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         guard currentTime - lastFrameTime >= frameInterval else { return }
         lastFrameTime = currentTime
         
-        frameProcessingQueue.async { [weak self] in
-            guard let self = self else { return }
-
-            guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-                print("Error: Could not get image buffer from sampleBuffer")
-                return
-            }
-            
-            CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
-            
-            let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-            guard let cgImage = self.ciContext.createCGImage(ciImage, from: ciImage.extent) else {
-                print("Error creating CGImage")
-                CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
-                return
-            }
-            
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
+            print("Error: Could not get image buffer from sampleBuffer")
+            return
+        }
+        
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        guard let cgImage = self.ciContext.createCGImage(ciImage, from: ciImage.extent) else {
+            print("Error creating CGImage")
             CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
+            return
+        }
+        
+        CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
+        
+        // Send to preview stream
+        self.addToPreviewStream?(cgImage)
+        
+        DispatchQueue.global(qos: .background).async { [weak self] in
+            guard let self = self else { return }
             
-            // Send to preview stream
+            // This method should now be faster due to the above optimizations
             self.addToPreviewStream?(cgImage)
             
-            // Compress and send over WebSocket in the background
+            
+            // Compress and send over WebSocket
             if let imageData = self.cgImageToData(cgImage) {
-                self.frameProcessingQueue.async {
-                    let width = cgImage.width
-                    let height = cgImage.height
-                    let encoding = "rgba8"
-                    let step = width * 4
-                    
-                    let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
-                    self.webSocketManager.send(message: json)
-                }
+                let width = cgImage.width
+                let height = cgImage.height
+                let encoding = "rgba8"
+                let step = width * 4 // Assuming 4 bytes per pixel
+                
+                let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
+                self.webSocketManager.send(message: json) // Send this in background to avoid blocking
+                
+            }
+            
+            if self.memoryUsageIsHigh() { // Implement this function to check memory usage
+                self.clearMemory()
             }
         }
     }
     
-    private func cgImageToData(_ cgImage: CGImage) -> Data? {
+    // A function to check if memory usage is high
+    func memoryUsageIsHigh() -> Bool {
+        // Implement logic to determine if memory usage is above a threshold
+        // For example, you can use mach_task_basic_info to get current memory usage
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+        
+        let result = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+        
+        if result == KERN_SUCCESS {
+            let usedMemory = info.resident_size
+            let threshold: UInt64 = 3 * 1024 * 1024 * 1024 // Set a threshold 3GB
+            return usedMemory > threshold
+        }
+        
+        return false
+    }
+    
+    func cgImageToData(_ cgImage: CGImage) -> Data? {
         let width = cgImage.width
         let height = cgImage.height
         let bytesPerRow = width * 4 // Assuming 4 bytes per pixel
@@ -141,7 +199,14 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         
         return pixelData
     }
-
+    
+    // Convert CGImage to JPEG to reduce memory footprint
+    //Not Implemented
+    private func cgImageToJPEGData(_ cgImage: CGImage) -> Data? {
+        let uiImage = UIImage(cgImage: cgImage)
+        return uiImage.jpegData(compressionQuality: 0.8) // Compress to reduce memory usage
+    }
+    
     private func convertToJSON(imageData: Data, height: Int, width: Int, encoding: String, step: Int) -> String {
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
@@ -167,13 +232,15 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
                 "data": imageArray
             ]
         ]
-
+        
         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             return String(data: jsonData, encoding: .utf8) ?? "{}"
         } else {
             return "{}"
         }
+        
     }
 }
+
 
 
