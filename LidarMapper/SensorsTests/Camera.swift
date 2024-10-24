@@ -43,8 +43,8 @@ class Camera: NSObject, ObservableObject {
         defer {
             captureSession.commitConfiguration()
         }
-        // Try lowering the camera resolution for testing
-        captureSession.sessionPreset = .medium
+        // camera resolution for testing
+        captureSession.sessionPreset = .low
         
         let videoOutput = AVCaptureVideoDataOutput()
         videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
