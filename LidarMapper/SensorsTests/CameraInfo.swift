@@ -98,7 +98,7 @@ class CameraInfo: ObservableObject {
                 ],
             "height": height,
             "width": width,
-            "distortion_model": distortionModel,
+            "distortionModel": distortionModel,
             "D": D,
             "K": K,
             "R": R,
