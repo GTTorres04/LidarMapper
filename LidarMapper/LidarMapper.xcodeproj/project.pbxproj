@@ -25,6 +25,7 @@
 		76B332032C89E55400C48E49 /* CMSampleBuffer+Extention.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332022C89E55400C48E49 /* CMSampleBuffer+Extention.swift */; };
 		76B332052C89E8D200C48E49 /* ViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332042C89E8D200C48E49 /* ViewModel.swift */; };
 		76B332072C89EED300C48E49 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76B332062C89EED300C48E49 /* CameraView.swift */; };
+		76E279A72CD3D03A0094E838 /* CameraInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76E279A62CD3D03A0094E838 /* CameraInfo.swift */; };
 		76F234492C871A8900B48F6B /* GPS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76F234482C871A8900B48F6B /* GPS.swift */; };
 /* End PBXBuildFile section */
 
@@ -68,6 +69,7 @@
 		76B332022C89E55400C48E49 /* CMSampleBuffer+Extention.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CMSampleBuffer+Extention.swift"; sourceTree = "<group>"; };
 		76B332042C89E8D200C48E49 /* ViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModel.swift; sourceTree = "<group>"; };
 		76B332062C89EED300C48E49 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		76E279A62CD3D03A0094E838 /* CameraInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraInfo.swift; sourceTree = "<group>"; };
 		76F234482C871A8900B48F6B /* GPS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPS.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -177,6 +179,7 @@
 				76B332022C89E55400C48E49 /* CMSampleBuffer+Extention.swift */,
 				7682213D2C8AEFDC00046C70 /* CIImage+Extension.swift */,
 				7685C2B32C5A9F9D00FEA82A /* CombinedSensorData.swift */,
+				76E279A62CD3D03A0094E838 /* CameraInfo.swift */,
 			);
 			path = SensorsTests;
 			sourceTree = "<group>";
@@ -332,6 +335,7 @@
 				76B332072C89EED300C48E49 /* CameraView.swift in Sources */,
 				760B2C742C4E906500F3AAD0 /* ContentView.swift in Sources */,
 				7671DA0F2C4FBD7300E47B17 /* TimerManager.swift in Sources */,
+				76E279A72CD3D03A0094E838 /* CameraInfo.swift in Sources */,
 				76B332032C89E55400C48E49 /* CMSampleBuffer+Extention.swift in Sources */,
 				7671DA0C2C4FAE7200E47B17 /* Magnetometer.swift in Sources */,
 				7682213E2C8AEFDC00046C70 /* CIImage+Extension.swift in Sources */,
