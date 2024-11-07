@@ -9,7 +9,7 @@ import Foundation
 import AVFoundation
 import Combine
 
-class CameraInfo: ObservableObject {
+class CameraInfo: NSObject, ObservableObject {
     
     @Published var webSocketManager = WebSocketManager()
     @Published var camera: Camera
@@ -76,14 +76,21 @@ class CameraInfo: ObservableObject {
             self.R = R
             self.P = P
         }
+
+        
+    }
+    
+    func sendData() {
+        let json = self.convertToJSON()
+        self.webSocketManager.send(message: json)
     }
     
     
-    private func convertToJSON(imageData: Data, height: Int, width: Int, encoding: String, step: Int) -> String {
+    
+    private func convertToJSON() -> String {
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
-        let imageArray = [UInt8](imageData)
         
         let json: [String: Any] = [
             "op": "publish",
@@ -96,18 +103,19 @@ class CameraInfo: ObservableObject {
                         "nsec": nsec
                     ]
                 ],
-            "height": height,
-            "width": width,
-            "distortionModel": distortionModel,
-            "D": D,
-            "K": K,
-            "R": R,
-            "P": P,
-            "binning_x": binning_X,
-            "binning_y": binning_Y,
-            "Roi": [0.0, 0.0, 0.0, 0.0]
+                "height": self.height,
+                "width": self.width,
+                "distortion_model": self.distortionModel,
+                "D": self.D,
+                "K": self.K,
+                "R": self.R,
+                "P": self.P,
+                "binning_x": self.binning_X,
+                "binning_y": self.binning_Y,
+            "roi": [0.0, 0.0, 0.0, 0.0]
           ]
      ]
+        print(json)
         
         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             return String(data: jsonData, encoding: .utf8) ?? "{}"

@@ -25,15 +25,79 @@ class Camera: NSObject, ObservableObject {
     
     private let ciContext = CIContext()
     
-    init(webSocketManager: WebSocketManager) {
-        super.init()
-        self.webSocketManager = webSocketManager
-        
-        Task {
-            await configureSession()
-            await startSession()
-        }
-    }
+    // Camera Info Properties
+        var height: Int
+        var width: Int
+        var distortionModel: String
+        var D: [Double]
+        var K: [Double]
+        var R: [Double]
+        var P: [Double]
+        var binning_X: Int
+        var binning_Y: Int
+        var roi: [Double]
+    
+    init(webSocketManager: WebSocketManager,
+            height: Int = 144,
+            width: Int = 192,
+            distortionModel: String = "plumb_bob",
+            D: [Double] = [],
+            K: [Double] = [],
+            R: [Double] = [],
+            P: [Double] = [],
+            binning_X: Int = 1,
+            binning_Y: Int = 1,
+            calibrationData: AVCameraCalibrationData? = nil) {
+           
+           // Initialize camera info properties
+           self.height = height
+           self.width = width
+           self.distortionModel = distortionModel
+           self.binning_X = binning_X
+           self.binning_Y = binning_Y
+           self.roi = [0.0, 0.0, 0.0, 0.0] // Default ROI
+           
+           if let calibrationData = calibrationData {
+               // Lens Distortion
+               self.D = calibrationData.lensDistortionLookupTable?.map(Double.init) ?? []
+               
+               // Intrinsic Matrix (3x3)
+               let intrinsicMatrix = calibrationData.intrinsicMatrix
+               self.K = [
+                   Double(intrinsicMatrix[0][0]), Double(intrinsicMatrix[0][1]), Double(intrinsicMatrix[0][2]),
+                   Double(intrinsicMatrix[1][0]), Double(intrinsicMatrix[1][1]), Double(intrinsicMatrix[1][2]),
+                   Double(intrinsicMatrix[2][0]), Double(intrinsicMatrix[2][1]), Double(intrinsicMatrix[2][2])
+               ]
+               
+               // Extrinsic Matrix (3x3)
+               let extrinsicMatrix = calibrationData.extrinsicMatrix
+               self.R = (0..<3).flatMap { row in
+                   (0..<3).map { col in Double(extrinsicMatrix[row][col]) }
+               }
+               
+               // Projection Matrix (4x4)
+               self.P = [
+                   Double(intrinsicMatrix[0][0]), Double(intrinsicMatrix[0][1]), Double(intrinsicMatrix[0][2]), 0.0,
+                   Double(intrinsicMatrix[1][0]), Double(intrinsicMatrix[1][1]), Double(intrinsicMatrix[1][2]), 0.0,
+                   Double(intrinsicMatrix[2][0]), Double(intrinsicMatrix[2][1]), Double(intrinsicMatrix[2][2]), 0.0,
+                   0.0, 0.0, 0.0, 1.0 // Homogeneous coordinates for projection
+               ]
+           } else {
+               // Initialize D, K, R, P with default values if no calibration data is provided
+               self.D = D
+               self.K = K
+               self.R = R
+               self.P = P
+           }
+           
+           super.init()
+           self.webSocketManager = webSocketManager
+           
+           Task {
+               await configureSession()
+               await startSession()
+           }
+       }
     
     private func configureSession() async {
         guard let systemPreferredCamera,
@@ -143,6 +207,9 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
                 let encoding = "rgba8"
                 let step = width * 4 // Assuming 4 bytes per pixel
                 
+                let test = self.getCameraInfo()
+                self.webSocketManager.send(message: test)
+                
                 let json = self.convertToJSON(imageData: imageData, height: height, width: width, encoding: encoding, step: step)
                 self.webSocketManager.send(message: json) // Send this in background to avoid blocking
                 
@@ -205,6 +272,62 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     private func cgImageToJPEGData(_ cgImage: CGImage) -> Data? {
         let uiImage = UIImage(cgImage: cgImage)
         return uiImage.jpegData(compressionQuality: 0.8) // Compress to reduce memory usage
+    }
+    
+    private func getCameraInfo() -> String{
+        let height = self.height
+        let width = self.width
+        let distortionModel = "plumb_bob"
+        var D :[Double] = D
+        var K :[Double] = K
+        var R :[Double] = R
+        var P :[Double] = P
+        let binning_X = 1
+        let binning_Y = 1
+
+        
+        //Fill DKRP values
+        
+        
+        let timestamp = Date().timeIntervalSince1970
+        let sec = Int(timestamp)
+        let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
+        
+        let json: [String: Any] = [
+            "op": "publish",
+            "topic": "/camera/camera_info",
+            "msg": [
+                "header": [
+                    "frame_id": "camera",
+                    "stamp": [
+                        "sec": sec,
+                        "nsec": nsec
+                    ]
+                ],
+                "height": height,
+                "width": width,
+                "distortion_model": distortionModel,
+                "D": D,
+                "K": K,
+                "R": R,
+                "P": P,
+                "binning_x": binning_X,
+                "binning_y": binning_Y,
+                "roi": [
+                    "x_offset": 0,
+                    "y_offset": 0,
+                    "height": height,
+                    "width": width,
+                    "do_rectify": false
+                ]
+            ]
+        ]
+        
+        if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+            return String(data: jsonData, encoding: .utf8) ?? "{}"
+        } else {
+            return "{}"
+        }
     }
     
     private func convertToJSON(imageData: Data, height: Int, width: Int, encoding: String, step: Int) -> String {
