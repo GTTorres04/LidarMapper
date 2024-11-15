@@ -119,6 +119,15 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
             }
             """
         )
+        
+        send(message:
+            """
+            { "op": "advertise",
+                "topic": "/point_cloud",
+                "type": "sensor_msgs/PointCloud2"
+            }
+            """
+        )
     }
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
