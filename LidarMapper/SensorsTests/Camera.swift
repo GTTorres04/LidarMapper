@@ -56,6 +56,7 @@ class Camera: NSObject, ObservableObject {
            self.binning_X = binning_X
            self.binning_Y = binning_Y
            self.roi = [0.0, 0.0, 0.0, 0.0] // Default ROI
+        
            
            if let calibrationData = calibrationData {
                // Lens Distortion

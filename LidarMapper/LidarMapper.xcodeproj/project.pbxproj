@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		7601EFE32C5107A900C442F4 /* Gyroscope.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7601EFE22C5107A900C442F4 /* Gyroscope.swift */; };
+		760424D32CE79A4D00BFEBDD /* PointCloudData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 760424D22CE79A4D00BFEBDD /* PointCloudData.swift */; };
 		760B2C722C4E906500F3AAD0 /* LidarMapperApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 760B2C712C4E906500F3AAD0 /* LidarMapperApp.swift */; };
 		760B2C742C4E906500F3AAD0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 760B2C732C4E906500F3AAD0 /* ContentView.swift */; };
 		760B2C762C4E906700F3AAD0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 760B2C752C4E906700F3AAD0 /* Assets.xcassets */; };
@@ -48,6 +49,7 @@
 
 /* Begin PBXFileReference section */
 		7601EFE22C5107A900C442F4 /* Gyroscope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gyroscope.swift; sourceTree = "<group>"; };
+		760424D22CE79A4D00BFEBDD /* PointCloudData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointCloudData.swift; sourceTree = "<group>"; };
 		760B2C6E2C4E906500F3AAD0 /* LidarMapper.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LidarMapper.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		760B2C712C4E906500F3AAD0 /* LidarMapperApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LidarMapperApp.swift; sourceTree = "<group>"; };
 		760B2C732C4E906500F3AAD0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -98,9 +100,18 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		760424D12CE79A2E00BFEBDD /* PointCloudData */ = {
+			isa = PBXGroup;
+			children = (
+				760424D22CE79A4D00BFEBDD /* PointCloudData.swift */,
+			);
+			path = PointCloudData;
+			sourceTree = "<group>";
+		};
 		760B2C652C4E906500F3AAD0 = {
 			isa = PBXGroup;
 			children = (
+				760424D12CE79A2E00BFEBDD /* PointCloudData */,
 				764724912C57ACA3003CF484 /* WebSocket */,
 				7671DA0D2C4FBD5700E47B17 /* TimeEvents */,
 				760B2C9F2C4E975F00F3AAD0 /* SensorsTests */,
@@ -340,6 +351,7 @@
 				7671DA0C2C4FAE7200E47B17 /* Magnetometer.swift in Sources */,
 				7682213E2C8AEFDC00046C70 /* CIImage+Extension.swift in Sources */,
 				7601EFE32C5107A900C442F4 /* Gyroscope.swift in Sources */,
+				760424D32CE79A4D00BFEBDD /* PointCloudData.swift in Sources */,
 				76B332012C89CBBF00C48E49 /* Camera.swift in Sources */,
 				760B2CA12C4E977500F3AAD0 /* Accelerometer.swift in Sources */,
 				760B2C722C4E906500F3AAD0 /* LidarMapperApp.swift in Sources */,
