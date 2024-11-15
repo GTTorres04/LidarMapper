@@ -61,6 +61,9 @@ class Camera: NSObject, ObservableObject {
                // Lens Distortion
                self.D = calibrationData.lensDistortionLookupTable?.map(Double.init) ?? []
                
+               // Validate D
+               assert(!D.isEmpty, "Distortion coefficients D must not be empty")
+               
                // Intrinsic Matrix (3x3)
                let intrinsicMatrix = calibrationData.intrinsicMatrix
                self.K = [
@@ -68,26 +71,57 @@ class Camera: NSObject, ObservableObject {
                    Double(intrinsicMatrix[1][0]), Double(intrinsicMatrix[1][1]), Double(intrinsicMatrix[1][2]),
                    Double(intrinsicMatrix[2][0]), Double(intrinsicMatrix[2][1]), Double(intrinsicMatrix[2][2])
                ]
+
+               // Ensure K contains 9 elements:
+               assert(self.K.count == 9, "Intrinsic matrix K must have exactly 9 elements")
+
                
                // Extrinsic Matrix (3x3)
                let extrinsicMatrix = calibrationData.extrinsicMatrix
-               self.R = (0..<3).flatMap { row in
-                   (0..<3).map { col in Double(extrinsicMatrix[row][col]) }
-               }
+                   self.R = (0..<3).flatMap { row in
+                       (0..<3).map { col in Double(extrinsicMatrix[row][col]) }
+                   }
+               
+               assert(R.count == 9, "Rotation matrix R must have exactly 9 elements")
+               
                
                // Projection Matrix (4x4)
                self.P = [
-                   Double(intrinsicMatrix[0][0]), Double(intrinsicMatrix[0][1]), Double(intrinsicMatrix[0][2]), 0.0,
-                   Double(intrinsicMatrix[1][0]), Double(intrinsicMatrix[1][1]), Double(intrinsicMatrix[1][2]), 0.0,
-                   Double(intrinsicMatrix[2][0]), Double(intrinsicMatrix[2][1]), Double(intrinsicMatrix[2][2]), 0.0,
-                   0.0, 0.0, 0.0, 1.0 // Homogeneous coordinates for projection
-               ]
+                       Double(intrinsicMatrix[0][0]), Double(intrinsicMatrix[0][1]), Double(intrinsicMatrix[0][2]), 0.0,
+                       Double(intrinsicMatrix[1][0]), Double(intrinsicMatrix[1][1]), Double(intrinsicMatrix[1][2]), 0.0,
+                       Double(intrinsicMatrix[2][0]), Double(intrinsicMatrix[2][1]), Double(intrinsicMatrix[2][2]), 0.0
+                   ]
+               
+               // Validate P
+               assert(P.count == 12, "Projection matrix P must have exactly 12 elements")
+               
+               if distortionModel == "plumb_bob" {
+                   assert(D.count == 5, "Distortion model 'plumb_bob' requires exactly 5 coefficients")
+               }
+               
+               
            } else {
                // Initialize D, K, R, P with default values if no calibration data is provided
-               self.D = D
-               self.K = K
-               self.R = R
-               self.P = P
+               self.D = [0.0, 0.0, 0.0, 0.0, 0.0] // Default distortion coefficients
+               
+               let fx = Double(width) // Approximate focal length as image width
+               let fy = Double(height) // Approximate focal length as image height
+               let cx = Double(width) / 2.0 // Principal point x-coordinate (image center)
+               let cy = Double(height) / 2.0 // Principal point y-coordinate (image center)
+
+               self.K = [
+                       fx,  0.0, cx,
+                       0.0, fy,  cy,
+                       0.0, 0.0, 1.0
+                   ]
+               
+               self.R = [1.0, 0.0, 0.0, // Identity matrix
+                         0.0, 1.0, 0.0,
+                         0.0, 0.0, 1.0]
+               self.P = [1.0, 0.0, 0.0, 0.0, // Default projection matrix
+                         0.0, 1.0, 0.0, 0.0,
+                         0.0, 0.0, 1.0, 0.0]
+               
            }
            
            super.init()
@@ -98,6 +132,7 @@ class Camera: NSObject, ObservableObject {
                await startSession()
            }
        }
+    
     
     private func configureSession() async {
         guard let systemPreferredCamera,
@@ -287,7 +322,6 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
 
         
         //Fill DKRP values
-        
         
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
