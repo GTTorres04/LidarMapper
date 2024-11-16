@@ -20,6 +20,8 @@ class Camera: NSObject, ObservableObject {
     var addToPreviewStream: ((CGImage) -> Void)?
     @Published var webSocketManager = WebSocketManager()
     
+    @Published var pointCloudData: [(x: Float, y: Float, z: Float)] = []
+    
     private var lastFrameTime: CFAbsoluteTime = 0
     private var frameInterval: CFAbsoluteTime = 1.0 / 15.0 // 15 FPS target
     
@@ -36,6 +38,8 @@ class Camera: NSObject, ObservableObject {
         var binning_X: Int
         var binning_Y: Int
         var roi: [Double]
+    
+        private var pointCloudDataHandler: PointCloudData
     
     init(webSocketManager: WebSocketManager,
             height: Int = 144,
@@ -56,7 +60,8 @@ class Camera: NSObject, ObservableObject {
            self.binning_X = binning_X
            self.binning_Y = binning_Y
            self.roi = [0.0, 0.0, 0.0, 0.0] // Default ROI
-        
+           
+                    
            
            if let calibrationData = calibrationData {
                // Lens Distortion
@@ -124,6 +129,8 @@ class Camera: NSObject, ObservableObject {
                          0.0, 0.0, 1.0, 0.0]
                
            }
+            // TO SEE /camera and /camera_info - Cant see /point_cloud
+           self.pointCloudDataHandler = PointCloudData()
            
            super.init()
            self.webSocketManager = webSocketManager
@@ -132,6 +139,8 @@ class Camera: NSObject, ObservableObject {
                await configureSession()
                await startSession()
            }
+        
+        //CameraManager.shared.addVideoDelegate(self)
        }
     
     

@@ -12,15 +12,18 @@ import Combine
 import simd
 
 
-class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
+class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDepthDataOutputDelegate {
     private var session: ARSession
     @Published var webSocketManager: WebSocketManager
+    
+    @Published var pointCloud: [(x: Float, y: Float, z: Float)] = []
     
     
     override init() {
         webSocketManager = WebSocketManager()
         session = ARSession()
         super.init()
+        //CameraManager.shared.addDepthDelegate(self)
         setupARSession()
         session.delegate = self
     }
