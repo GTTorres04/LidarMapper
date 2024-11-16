@@ -22,7 +22,7 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
         session = ARSession()
         super.init()
         setupARSession()
-        //setupROSWebSocket()
+        session.delegate = self
     }
     
     // Initialize iPhone LiDAR Data Capture
@@ -38,13 +38,9 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
     
     //Extract Point Cloud Data from Depth Map
     private func extractPointCloudFromDepth(frame: ARFrame, depthData: ARDepthData) -> [(x: Float, y: Float, z: Float)]? {
-        guard let intrinsics = getCameraIntrinsics(from: frame) else { return nil }
+        guard let intrinsics = getCameraIntrinsics(from: frame) else { return [] }
         
-        let fx = intrinsics.fx
-        let fy = intrinsics.fy
-        let cx = intrinsics.cx
-        let cy = intrinsics.cy
-        
+        let (fx, fy, cx, cy) = (intrinsics.fx, intrinsics.fy, intrinsics.cx, intrinsics.cy)
         let depthMap = depthData.depthMap
         let width = CVPixelBufferGetWidth(depthMap)
         let height = CVPixelBufferGetHeight(depthMap)
@@ -52,12 +48,17 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
         CVPixelBufferLockBaseAddress(depthMap, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
         
-        let baseAddress = CVPixelBufferGetBaseAddress(depthMap)
+        guard let baseAddress = CVPixelBufferGetBaseAddress(depthMap) else { return [] }
+        let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
+        
         var pointCloud: [(x: Float, y: Float, z: Float)] = []
         
-        for y in 0..<height {
-            for x in 0..<width {
-                let depth = baseAddress?.advanced(by: y * CVPixelBufferGetBytesPerRow(depthMap) + x * MemoryLayout<Float>.size).assumingMemoryBound(to: Float.self).pointee ?? 0
+        for y in stride(from: 0, to: height, by: 2) { // Process every 2nd row for speed
+            for x in stride(from: 0, to: width, by: 2) { // Process every 2nd column
+                let depth = baseAddress
+                    .advanced(by: y * rowBytes + x * MemoryLayout<Float>.size)
+                    .assumingMemoryBound(to: Float.self)
+                    .pointee
                 if depth > 0 {
                     let xWorld = (Float(x) - cx) * depth / fx
                     let yWorld = (Float(y) - cy) * depth / fy
@@ -97,24 +98,32 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
     }
     
     private func getCameraIntrinsics(from frame: ARFrame) -> (fx: Float, fy: Float, cx: Float, cy: Float)? {
-            let intrinsics = frame.camera.intrinsics
-            let fx = intrinsics[0, 0]
-            let fy = intrinsics[1, 1]
-            let cx = intrinsics[0, 2]
-            let cy = intrinsics[1, 2]
-            return (fx, fy, cx, cy)
-        }
+        let intrinsics = frame.camera.intrinsics
+        let fx = intrinsics[0, 0]
+        let fy = intrinsics[1, 1]
+        let cx = intrinsics[0, 2]
+        let cy = intrinsics[1, 2]
+        return (fx, fy, cx, cy)
+    }
     
+    private var lastSendTime: TimeInterval = 0
+    private let minInterval: TimeInterval = 1.0 / 15.0 // 15 Hz
+
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        let currentTime = Date().timeIntervalSince1970
+        guard currentTime - lastSendTime >= minInterval else { return }
+        lastSendTime = currentTime
+
+        var combinedPointCloud: [(x: Float, y: Float, z: Float)] = []
+
         if let sceneDepth = frame.sceneDepth {
-            if let depthPointCloud = extractPointCloudFromDepth(frame: frame, depthData: sceneDepth) {
-                sendPointCloudToROS(pointCloud: depthPointCloud)
-            }
+            combinedPointCloud += extractPointCloudFromDepth(frame: frame, depthData: sceneDepth)!
         }
 
-        let meshPointCloud = convertMeshToPointCloud(anchors: frame.anchors)
-        if !meshPointCloud.isEmpty {
-            sendPointCloudToROS(pointCloud: meshPointCloud)
+        combinedPointCloud += convertMeshToPointCloud(anchors: frame.anchors)
+
+        if !combinedPointCloud.isEmpty {
+            sendPointCloudToROS(pointCloud: combinedPointCloud)
         }
     }
     
@@ -123,16 +132,11 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
     func sendPointCloudToROS(pointCloud: [(x: Float, y: Float, z: Float)]) {
         guard !pointCloud.isEmpty else { return }
         
-        for point in pointCloud {
-                print("Point: (\(point.x), \(point.y), \(point.z))")
-        }
-
-
         // Get the current timestamp
         let timestamp = Date().timeIntervalSince1970
         let sec = Int(timestamp)
         let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
-
+        
         // Create the ROS message
         let json: [String: Any] = [
             "op": "publish",
@@ -159,14 +163,14 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
                 "is_dense": true
             ]
         ]
-
+        
         // Convert the JSON to a string
         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "{}"
             webSocketManager.send(message: jsonString)
         }
     }
-
+    
     // Helper function to encode point cloud data into a byte array
     private func encodePointCloudData(_ pointCloud: [(x: Float, y: Float, z: Float)]) -> [UInt8] {
         var data = [UInt8]()
@@ -180,6 +184,4 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject {
         }
         return data
     }
-
-    
 }

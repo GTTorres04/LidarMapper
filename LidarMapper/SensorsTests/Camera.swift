@@ -189,6 +189,8 @@ class Camera: NSObject, ObservableObject {
             return nil
         }
         
+        
+        
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
         return ciContext.createCGImage(ciImage, from: ciImage.extent)
     }
@@ -251,14 +253,16 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
                 
             }
             
-            if self.memoryUsageIsHigh() { // Implement this function to check memory usage
-                self.clearMemory()
+            Task {
+                if await self.memoryUsageIsHigh() {
+                    self.clearMemory()
+                }
             }
         }
     }
     
     // A function to check if memory usage is high
-    func memoryUsageIsHigh() -> Bool {
+    func memoryUsageIsHigh() async -> Bool {
         // Implement logic to determine if memory usage is above a threshold
         // For example, you can use mach_task_basic_info to get current memory usage
         var info = mach_task_basic_info()
