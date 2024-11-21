@@ -39,7 +39,7 @@ class Camera: NSObject, ObservableObject {
         var binning_Y: Int
         var roi: [Double]
     
-        private var pointCloudDataHandler: PointCloudData
+        //private var pointCloudDataHandler: PointCloudData
     
     init(webSocketManager: WebSocketManager,
             height: Int = 144,
@@ -107,7 +107,7 @@ class Camera: NSObject, ObservableObject {
                
                
            } else {
-               // Initialize D, K, R, P with default values if no calibration data is provided
+               // Initialize D, K, R, P with default values provided by David Portugal
                self.D = [0.0, 0.0, 0.0, 0.0, 0.0] // Default distortion coefficients
                
                let fx = Double(width) // Approximate focal length as image width
@@ -120,17 +120,19 @@ class Camera: NSObject, ObservableObject {
                        0.0, fy,  cy,
                        0.0, 0.0, 1.0
                    ]
+               //Camera Matrix
+               self.R = [ 7.1998919677734375e+02, 0.0, 3.5894522094726562e+02,
+                          0.0, 7.1998919677734375e+02, 4.8530447387695312e+02,
+                          0.0, 0.0, 1.0 ]
                
-               self.R = [1.0, 0.0, 0.0, // Identity matrix
-                         0.0, 1.0, 0.0,
-                         0.0, 0.0, 1.0]
-               self.P = [1.0, 0.0, 0.0, 0.0, // Default projection matrix
-                         0.0, 1.0, 0.0, 0.0,
-                         0.0, 0.0, 1.0, 0.0]
-               
+               //Projection Matrix:
+               self.P = [ -1.19209290e-07, 0.0, 1.00000012e+00,
+                           0.0, 0.0, -1.00000024e+00,
+                           0.0, 0.0, 1.00000012e+00,
+                           0.0, -1.19209290e-07, 0.0 ]
            }
             // TO SEE /camera and /camera_info - Cant see /point_cloud
-           self.pointCloudDataHandler = PointCloudData()
+           //self.pointCloudDataHandler = PointCloudData()
            
            super.init()
            self.webSocketManager = webSocketManager
