@@ -111,24 +111,30 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
     
     private var lastSendTime: TimeInterval = 0
     private let minInterval: TimeInterval = 1.0 / 15.0 // 15 Hz
-
+    
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let currentTime = Date().timeIntervalSince1970
         guard currentTime - lastSendTime >= minInterval else { return }
         lastSendTime = currentTime
-
+        
         var combinedPointCloud: [(x: Float, y: Float, z: Float)] = []
-
+        
         if let sceneDepth = frame.sceneDepth {
             combinedPointCloud += extractPointCloudFromDepth(frame: frame, depthData: sceneDepth)!
         }
-
+        
         combinedPointCloud += convertMeshToPointCloud(anchors: frame.anchors)
-
+        
         if !combinedPointCloud.isEmpty {
             sendPointCloudToROS(pointCloud: combinedPointCloud)
         }
     }
+    
+    // Function to reset the point cloud buffer
+       private func resetPointCloud() {
+           pointCloud.removeAll(keepingCapacity: false)
+           print("Point cloud buffer reset.")
+       }
     
     
     // Format Data for ROS
@@ -171,6 +177,11 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
         if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
             let jsonString = String(data: jsonData, encoding: .utf8) ?? "{}"
             webSocketManager.send(message: jsonString)
+            
+            let seconds = 1.0
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) {
+                self.resetPointCloud()
+            }
         }
     }
     
