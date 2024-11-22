@@ -30,7 +30,7 @@ Key features include:
 
 ## License
 
- [LidarMapper](https://github.com/GTTorres04/LidarMapper) © 2024 by Gonçalo Torres is licensed under [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1) 
+ [LidarMapper](https://github.com/GTTorres04/LidarMapper) © 2024 by [Gonçalo Torres](https://www.isr.uc.pt/index.php/people?task=showpeople.show%28%29&idPerson=2306) is licensed under [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1) 
 
 ---
 
