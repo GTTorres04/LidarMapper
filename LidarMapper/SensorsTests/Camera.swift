@@ -7,14 +7,20 @@
 import Foundation
 import AVFoundation
 import UIKit
+import ARKit
+import Combine
+import simd
 
-class Camera: NSObject, ObservableObject {
+class Camera: NSObject, ObservableObject, ARSessionDelegate {
     
-    private let captureSession = AVCaptureSession()
+    let captureSession = AVCaptureSession()
     private var deviceInput: AVCaptureDeviceInput?
     private var videoOutput: AVCaptureVideoDataOutput?
     private let systemPreferredCamera = AVCaptureDevice.default(for: .video)
     private let sessionQueue = DispatchQueue(label: "video.preview.session")
+    
+    private let session = ARSession()
+    
     
     @Published var image: CGImage?
     var addToPreviewStream: ((CGImage) -> Void)?
@@ -22,8 +28,10 @@ class Camera: NSObject, ObservableObject {
     
     @Published var pointCloudData: [(x: Float, y: Float, z: Float)] = []
     
-    private var lastFrameTime: CFAbsoluteTime = 0
-    private var frameInterval: CFAbsoluteTime = 1.0 / 15.0 // 15 FPS target
+        private var lastFrameTime: CFAbsoluteTime = 0
+        private var frameInterval: CFAbsoluteTime = 1.0 / 15.0 // 15 FPS target
+        private var lastSendTime: TimeInterval = 0
+        private let minInterval: TimeInterval = 1.0 / 15.0 // 15 Hz for point cloud data
     
     private let ciContext = CIContext()
     
@@ -40,6 +48,7 @@ class Camera: NSObject, ObservableObject {
         var roi: [Double]
     
         //private var pointCloudDataHandler: PointCloudData
+    
     
     init(webSocketManager: WebSocketManager,
             height: Int = 144,
@@ -135,6 +144,7 @@ class Camera: NSObject, ObservableObject {
            //self.pointCloudDataHandler = PointCloudData()
            
            super.init()
+           setupARSession()
            self.webSocketManager = webSocketManager
            
            Task {
@@ -144,29 +154,81 @@ class Camera: NSObject, ObservableObject {
         
         //CameraManager.shared.addVideoDelegate(self)
        }
+
+    let config = ARWorldTrackingConfiguration()
+    
+    // MARK: - ARKit Setup
+        func setupARSession() {
+            config.sceneReconstruction = .mesh
+            config.frameSemantics = .sceneDepth
+            config.planeDetection = .horizontal
+            session.delegate = self
+            session.pause()
+            session.run(config, options: [.resetTracking, .removeExistingAnchors])
+        }
+    
+    
     
     
     private func configureSession() async {
-        guard let systemPreferredCamera,
-              let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera) else { return }
+            captureSession.stopRunning()
+            guard let systemPreferredCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+                  let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera) else {
+                print("Error: Unable to access the camera.")
+                return
+            }
         
-        captureSession.beginConfiguration()
-        defer {
-            captureSession.commitConfiguration()
+        
+
+            do {
+                try systemPreferredCamera.lockForConfiguration()
+                
+                // Select the default or ARKit-compatible format
+                if let compatibleFormat = systemPreferredCamera.formats.first(where: { format in
+                    format.videoSupportedFrameRateRanges.contains { $0.minFrameRate <= 30 && $0.maxFrameRate >= 30 }
+                }) {
+                    systemPreferredCamera.activeFormat = compatibleFormat
+                } else {
+                    print("Warning: No compatible format found, using the current active format.")
+                }
+                
+                systemPreferredCamera.unlockForConfiguration()
+                
+                let config = ARWorldTrackingConfiguration()
+                
+                // MARK: - ARKit Setup
+                    func setupARSession() {
+                        config.sceneReconstruction = .mesh
+                        config.frameSemantics = .sceneDepth
+                        session.delegate = self
+                        session.pause()
+                        session.run(config, options: [.resetTracking, .removeExistingAnchors])
+                    }
+            } catch {
+                print("Error configuring camera: \(error.localizedDescription)")
+                return
+            }
+
+            captureSession.beginConfiguration()
+            defer {
+                captureSession.commitConfiguration()
+            }
+
+            // Set the session preset for testing (e.g., low resolution)
+            captureSession.sessionPreset = .low
+
+            let videoOutput = AVCaptureVideoDataOutput()
+            videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
+
+            // Add inputs and outputs to the session
+            if captureSession.canAddInput(deviceInput) && captureSession.canAddOutput(videoOutput) {
+                captureSession.addInput(deviceInput)
+                captureSession.addOutput(videoOutput)
+            } else {
+                print("Error: Unable to add input/output to capture session.")
+            }
         }
-        // camera resolution for testing
-        captureSession.sessionPreset = .low
-        
-        let videoOutput = AVCaptureVideoDataOutput()
-        videoOutput.setSampleBufferDelegate(self, queue: sessionQueue)
-        
-        if captureSession.canAddInput(deviceInput) && captureSession.canAddOutput(videoOutput) {
-            captureSession.addInput(deviceInput)
-            captureSession.addOutput(videoOutput)
-        } else {
-            print("Error: Unable to add input/output to capture session.")
-        }
-    }
+
     
     func startSession() async {
         guard !captureSession.isRunning else { return }
@@ -413,6 +475,194 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         }
         
     }
+    
+    // MARK: - ARSession Delegate Method for Point Cloud
+    func session(_ session: ARSession, didUpdate frame: ARFrame, didFailWithError error: Error) {
+        let currentTime = Date().timeIntervalSince1970
+        guard currentTime - lastSendTime >= minInterval else { return }
+        lastSendTime = currentTime
+
+        var combinedPointCloud: [(x: Float, y: Float, z: Float)] = []
+
+        // Extract point cloud from the depth data
+        if let sceneDepth = frame.sceneDepth {
+            if let depthPointCloud = extractPointCloudFromDepth(frame: frame, depthData: sceneDepth) {
+                combinedPointCloud += depthPointCloud
+            }
+            
+            // Present an error message to the user
+                print("Session failed. Changing worldAlignment property.")
+                print(error.localizedDescription)
+
+                if let arError = error as? ARError {
+                    switch arError.errorCode {
+                    case 102:
+                        config.worldAlignment = .gravity
+                        restartSessionWithoutDelete()
+                    default:
+                        restartSessionWithoutDelete()
+                    }
+                }
+        }
+
+        // Add points from the mesh anchors
+        combinedPointCloud += convertMeshToPointCloud(anchors: frame.anchors)
+
+        // Send point cloud to ROS
+        if !combinedPointCloud.isEmpty {
+            sendPointCloudToROS(pointCloud: combinedPointCloud)
+        }
+    }
+    
+    @objc func restartSessionWithoutDelete() {
+        // Restart session with a different worldAlignment - prevents bug from crashing app
+        self.session.pause()
+        self.session.run(config, options: [
+            .resetTracking,
+            .removeExistingAnchors])
+    }
+
+    
+    func sendPointCloudToROS(pointCloud: [(x: Float, y: Float, z: Float)]) {
+        guard !pointCloud.isEmpty else { return }
+        
+        // Get the current timestamp
+        let timestamp = Date().timeIntervalSince1970
+        let sec = Int(timestamp)
+        let nsec = Int((timestamp - Double(sec)) * 1_000_000_000)
+        
+        // Create the ROS message
+        let json: [String: Any] = [
+            "op": "publish",
+            "topic": "/point_cloud",
+            "msg": [
+                "header": [
+                    "frame_id": "camara",
+                    "stamp": [
+                        "sec": sec,
+                        "nsec": nsec
+                    ]
+                ],
+                "height": 1, // Unstructured point cloud
+                "width": pointCloud.count,
+                "fields": [
+                    ["name": "x", "offset": 0, "datatype": 7, "count": 1], // datatype 7 = FLOAT32
+                    ["name": "y", "offset": 4, "datatype": 7, "count": 1],
+                    ["name": "z", "offset": 8, "datatype": 7, "count": 1]
+                ],
+                "is_bigendian": false,
+                "point_step": 12, // 4 bytes each for x, y, z
+                "row_step": 12 * pointCloud.count,
+                "data": encodePointCloudData(pointCloud),
+                "is_dense": true
+            ]
+        ]
+        
+        // Convert the JSON to a string
+        if let jsonData = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
+            let jsonString = String(data: jsonData, encoding: .utf8) ?? "{}"
+            webSocketManager.send(message: jsonString)
+        }
+    }
+    
+    private func encodePointCloudData(_ pointCloud: [(x: Float, y: Float, z: Float)]) -> [UInt8] {
+        var data = [UInt8]()
+        for point in pointCloud {
+            var x = point.x
+            var y = point.y
+            var z = point.z
+            withUnsafeBytes(of: &x) { data.append(contentsOf: $0) }
+            withUnsafeBytes(of: &y) { data.append(contentsOf: $0) }
+            withUnsafeBytes(of: &z) { data.append(contentsOf: $0) }
+        }
+        return data
+    }
+    
+    //MARK: - Extract Point Cloud Data from Depth Map
+    private func extractPointCloudFromDepth(frame: ARFrame, depthData: ARDepthData) -> [(x: Float, y: Float, z: Float)]? {
+        guard let intrinsics = getCameraIntrinsics(from: frame) else { return [] }
+        
+        let (fx, fy, cx, cy) = (intrinsics.fx, intrinsics.fy, intrinsics.cx, intrinsics.cy)
+        let depthMap = depthData.depthMap
+        let width = CVPixelBufferGetWidth(depthMap)
+        let height = CVPixelBufferGetHeight(depthMap)
+        
+        CVPixelBufferLockBaseAddress(depthMap, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
+        
+        guard let baseAddress = CVPixelBufferGetBaseAddress(depthMap) else { return [] }
+        let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
+        
+        var pointCloud: [(x: Float, y: Float, z: Float)] = []
+        
+        for y in stride(from: 0, to: height, by: 2) { // Process every 2nd row for speed
+            for x in stride(from: 0, to: width, by: 2) { // Process every 2nd column
+                let depth = baseAddress
+                    .advanced(by: y * rowBytes + x * MemoryLayout<Float>.size)
+                    .assumingMemoryBound(to: Float.self)
+                    .pointee
+                if depth > 0 {
+                    let xWorld = (Float(x) - cx) * depth / fx
+                    let yWorld = (Float(y) - cy) * depth / fy
+                    let zWorld = depth
+                    pointCloud.append((x: xWorld, y: yWorld, z: zWorld))
+                }
+                // Skip invalid depth values
+                if depth == 0 {
+                    continue
+                }
+                
+            }
+        }
+        
+        // Unlock the base address after reading the pixel data
+        CVPixelBufferUnlockBaseAddress(depthMap, .readOnly)
+        
+        return pointCloud
+    }
+    
+    // MARK: - Retrieve Camera Intrinsics
+    private func getCameraIntrinsics(from frame: ARFrame) -> (fx: Float, fy: Float, cx: Float, cy: Float)? {
+        // Camera intrinsics are stored in the ARFrame's camera properties
+        let intrinsics = frame.camera.intrinsics
+        
+        let fx = intrinsics[0, 0]
+        let fy = intrinsics[1, 1]
+        let cx = intrinsics[0, 2]
+        let cy = intrinsics[1, 2]
+        
+        return (fx, fy, cx, cy)
+    }
+    
+    //MARK: - Convert Mesh to Point Cloud Data
+    private func convertMeshToPointCloud(anchors: [ARAnchor]) -> [(x: Float, y: Float, z: Float)] {
+        var pointCloud: [(x: Float, y: Float, z: Float)] = []
+        
+        for anchor in anchors {
+            guard let meshAnchor = anchor as? ARMeshAnchor else { continue }
+            let geometry = meshAnchor.geometry
+            
+            let vertexBuffer = geometry.vertices
+            let vertexData = vertexBuffer.buffer.contents() // Get the raw buffer pointer
+            
+            // Iterate over the vertices
+            for i in 0..<vertexBuffer.count {
+                let vertexPointer = vertexData.advanced(by: i * vertexBuffer.stride)
+                let vertex = vertexPointer.assumingMemoryBound(to: simd_float3.self).pointee
+                
+                // Transform vertex into world space using the anchor's transform
+                let worldVertex = simd_make_float4(vertex, 1.0)
+                let transformedVertex = meshAnchor.transform * worldVertex
+                
+                pointCloud.append((x: transformedVertex.x, y: transformedVertex.y, z: transformedVertex.z))
+            }
+        }
+        
+        return pointCloud
+    }
+    
+    
+    
 }
 
 

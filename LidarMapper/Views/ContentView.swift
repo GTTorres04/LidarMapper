@@ -22,7 +22,6 @@ struct ContentView: View {
     @State  var viewModel = ViewModel()
     @StateObject var camera = Camera(webSocketManager: WebSocketManager())
     @StateObject var cameraInfo = CameraInfo()
-    @StateObject var pointCloudData = PointCloudData()
     
     
     // State to toggle between views

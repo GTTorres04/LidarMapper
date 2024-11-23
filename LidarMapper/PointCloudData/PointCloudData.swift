@@ -12,7 +12,7 @@ import Combine
 import simd
 
 
-class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDepthDataOutputDelegate {
+/*class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDepthDataOutputDelegate {
     private var session: ARSession
     @Published var webSocketManager: WebSocketManager
     
@@ -187,4 +187,4 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
         }
         return data
     }
-}
+}*/
