@@ -154,11 +154,20 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
         
         //CameraManager.shared.addVideoDelegate(self)
        }
+    
+    func check() {
+        if captureSession.isRunning {
+            captureSession.stopRunning()
+        }
+    }
+    
+    
 
     let config = ARWorldTrackingConfiguration()
     
     // MARK: - ARKit Setup
         func setupARSession() {
+            check()
             config.sceneReconstruction = .mesh
             config.frameSemantics = .sceneDepth
             config.planeDetection = .horizontal
@@ -171,6 +180,7 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
     
     
     private func configureSession() async {
+            check()
             captureSession.stopRunning()
             guard let systemPreferredCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
                   let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera) else {
@@ -185,7 +195,7 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
                 
                 // Select the default or ARKit-compatible format
                 if let compatibleFormat = systemPreferredCamera.formats.first(where: { format in
-                    format.videoSupportedFrameRateRanges.contains { $0.minFrameRate <= 30 && $0.maxFrameRate >= 30 }
+                    format.isVideoBinned == false && format.videoSupportedFrameRateRanges.contains { $0.maxFrameRate >= 30 }
                 }) {
                     systemPreferredCamera.activeFormat = compatibleFormat
                 } else {
@@ -231,6 +241,7 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
 
     
     func startSession() async {
+        check()
         guard !captureSession.isRunning else { return }
         
         await withCheckedContinuation { continuation in
@@ -491,8 +502,7 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
             }
             
             // Present an error message to the user
-                print("Session failed. Changing worldAlignment property.")
-                print(error.localizedDescription)
+            print("ARSession failed with error: \(error.localizedDescription)")
 
                 if let arError = error as? ARError {
                     switch arError.errorCode {
