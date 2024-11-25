@@ -155,19 +155,12 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
         //CameraManager.shared.addVideoDelegate(self)
        }
     
-    func check() {
-        if captureSession.isRunning {
-            captureSession.stopRunning()
-        }
-    }
-    
     
 
     let config = ARWorldTrackingConfiguration()
     
     // MARK: - ARKit Setup
         func setupARSession() {
-            check()
             config.sceneReconstruction = .mesh
             config.frameSemantics = .sceneDepth
             config.planeDetection = .horizontal
@@ -180,7 +173,6 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
     
     
     private func configureSession() async {
-            check()
             captureSession.stopRunning()
             guard let systemPreferredCamera = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
                   let deviceInput = try? AVCaptureDeviceInput(device: systemPreferredCamera) else {
@@ -203,8 +195,7 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
                 }
                 
                 systemPreferredCamera.unlockForConfiguration()
-                
-                let config = ARWorldTrackingConfiguration()
+                 
                 
                 // MARK: - ARKit Setup
                     func setupARSession() {
@@ -241,7 +232,6 @@ class Camera: NSObject, ObservableObject, ARSessionDelegate {
 
     
     func startSession() async {
-        check()
         guard !captureSession.isRunning else { return }
         
         await withCheckedContinuation { continuation in
