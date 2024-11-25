@@ -34,6 +34,9 @@ Key features include:
 - **Foxglove Studio** (Optional for visualization):
   - Use it to visualize sensor data streams in real-time.   
 
+### iPhone Requirements
+- iPhone 12 Pro or later
+
 ---
 
 ## Adicional Notes:
