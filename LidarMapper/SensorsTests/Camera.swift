@@ -61,52 +61,6 @@ class Camera: NSObject, ObservableObject {
            self.binning_Y = binning_Y
            self.roi = [0.0, 0.0, 0.0, 0.0] // Default ROI
            
-                    
-           
-           if let calibrationData = calibrationData {
-               // Lens Distortion
-               self.D = calibrationData.lensDistortionLookupTable?.map(Double.init) ?? []
-               
-               // Validate D
-               assert(!D.isEmpty, "Distortion coefficients D must not be empty")
-               
-               // Intrinsic Matrix (3x3)
-               let intrinsicMatrix = calibrationData.intrinsicMatrix
-               self.K = [
-                   Double(intrinsicMatrix[0][0]), Double(intrinsicMatrix[0][1]), Double(intrinsicMatrix[0][2]),
-                   Double(intrinsicMatrix[1][0]), Double(intrinsicMatrix[1][1]), Double(intrinsicMatrix[1][2]),
-                   Double(intrinsicMatrix[2][0]), Double(intrinsicMatrix[2][1]), Double(intrinsicMatrix[2][2])
-               ]
-
-               // Ensure K contains 9 elements:
-               assert(self.K.count == 9, "Intrinsic matrix K must have exactly 9 elements")
-
-               
-               // Extrinsic Matrix (3x3)
-               let extrinsicMatrix = calibrationData.extrinsicMatrix
-                   self.R = (0..<3).flatMap { row in
-                       (0..<3).map { col in Double(extrinsicMatrix[row][col]) }
-                   }
-               
-               assert(R.count == 9, "Rotation matrix R must have exactly 9 elements")
-               
-               
-               // Projection Matrix (4x4)
-               self.P = [
-                       Double(intrinsicMatrix[0][0]), Double(intrinsicMatrix[0][1]), Double(intrinsicMatrix[0][2]), 0.0,
-                       Double(intrinsicMatrix[1][0]), Double(intrinsicMatrix[1][1]), Double(intrinsicMatrix[1][2]), 0.0,
-                       Double(intrinsicMatrix[2][0]), Double(intrinsicMatrix[2][1]), Double(intrinsicMatrix[2][2]), 0.0
-                   ]
-               
-               // Validate P
-               assert(P.count == 12, "Projection matrix P must have exactly 12 elements")
-               
-               if distortionModel == "plumb_bob" {
-                   assert(D.count == 5, "Distortion model 'plumb_bob' requires exactly 5 coefficients")
-               }
-               
-               
-           } else {
                // Initialize D, K, R, P with default values provided by David Portugal
                self.D = [0.0, 0.0, 0.0, 0.0, 0.0] // Default distortion coefficients
                
@@ -130,9 +84,8 @@ class Camera: NSObject, ObservableObject {
                            0.0, 0.0, -1.00000024e+00,
                            0.0, 0.0, 1.00000012e+00,
                            0.0, -1.19209290e-07, 0.0 ]
-           }
             // TO SEE /camera and /camera_info - Cant see /point_cloud
-           //self.pointCloudDataHandler = PointCloudData()
+          // self.pointCloudDataHandler = PointCloudData()
            
            super.init()
            self.webSocketManager = webSocketManager
@@ -141,9 +94,7 @@ class Camera: NSObject, ObservableObject {
                await configureSession()
                await startSession()
            }
-        
-        //CameraManager.shared.addVideoDelegate(self)
-       }
+    }
     
     
     private func configureSession() async {
@@ -216,6 +167,7 @@ class Camera: NSObject, ObservableObject {
 
 extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
     
+    //MARK: - Access the Camera Object, Capture Output
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let currentTime = CFAbsoluteTimeGetCurrent()
         
@@ -325,6 +277,7 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         return uiImage.jpegData(compressionQuality: 0.8) // Compress to reduce memory usage
     }
     
+    //MARK: - Convert to Images JSON messages
     private func getCameraInfo() -> String{
         let height = self.height
         let width = self.width
