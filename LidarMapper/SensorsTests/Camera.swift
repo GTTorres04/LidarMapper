@@ -85,7 +85,7 @@ class Camera: NSObject, ObservableObject {
                            0.0, 0.0, 1.00000012e+00,
                            0.0, -1.19209290e-07, 0.0 ]
             // TO SEE /camera and /camera_info - Cant see /point_cloud
-          // self.pointCloudDataHandler = PointCloudData()
+           //self.pointCloudDataHandler = PointCloudData()
            
            super.init()
            self.webSocketManager = webSocketManager
