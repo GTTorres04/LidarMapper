@@ -16,7 +16,12 @@ class WebSocketManager: NSObject, ObservableObject, URLSessionWebSocketDelegate 
     private var url: URL?
     
     override init() {
+        // ISR
         self.url = URL(string: "ws://10.231.216.101:9090")
+        
+        
+        // DEEC - usar este na defesa
+        //self.url = URL(string: "ws://10.206.84.32:9090")
         self.session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         super.init()
         

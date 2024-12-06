@@ -367,6 +367,3 @@ extension Camera: AVCaptureVideoDataOutputSampleBufferDelegate {
         
     }
 }
-
-
-

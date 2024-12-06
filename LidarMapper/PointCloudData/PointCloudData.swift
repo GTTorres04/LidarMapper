@@ -10,6 +10,7 @@ import SceneKit
 import Foundation
 import Combine
 import simd
+import AVFoundation
 
 
 class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDepthDataOutputDelegate {
@@ -17,6 +18,7 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
     @Published var webSocketManager: WebSocketManager
     
     @Published var pointCloud: [(x: Float, y: Float, z: Float)] = []
+    
     
     
     override init() {
@@ -45,45 +47,46 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
         resetPointCloud()
         pointCloud = []
         
+        
         // Use rawFeaturePoints if available, or default to an empty array
-        guard let featurePoints = frame.rawFeaturePoints?.points 
+        guard let featurePoints = frame.rawFeaturePoints?.points
         else {
-        return pointCloud
+            return pointCloud
         }
-            
+        
         // Convert the array of SIMD3<Float> to a tuple array [(x: Float, y: Float, z: Float)]
         pointCloud = featurePoints.map { (x: $0.x, y: $0.y, z: $0.z) }
         
         /*guard let intrinsics = getCameraIntrinsics(from: frame) else { return [] }
-        
-        let (fx, fy, cx, cy) = (intrinsics.fx, intrinsics.fy, intrinsics.cx, intrinsics.cy)
-        let depthMap = depthData.depthMap
-        let width = CVPixelBufferGetWidth(depthMap)
-        let height = CVPixelBufferGetHeight(depthMap)
-        
-        CVPixelBufferLockBaseAddress(depthMap, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
-        frame.rawFeaturePoints?.points
-        guard let baseAddress = CVPixelBufferGetBaseAddress(depthMap) else { return [] }
-        let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
-        
-        var pointCloud: [(x: Float, y: Float, z: Float)] = []
-        
-        for y in stride(from: 0, to: height, by: 2) { // Process every 2nd row for speed
-            for x in stride(from: 0, to: width, by: 2) { // Process every 2nd column
-                let depth = baseAddress
-                    .advanced(by: y * rowBytes + x * MemoryLayout<Float>.size)
-                    .assumingMemoryBound(to: Float.self)
-                    .pointee
-                if depth > 0 {
-                    let xWorld = (Float(x) - cx) * depth / fx
-                    let yWorld = (Float(y) - cy) * depth / fy
-                    let zWorld = depth
-                    pointCloud.append((x: xWorld, y: yWorld, z: zWorld))
-                }
-            }
-        }
-        return pointCloud*/
+         
+         let (fx, fy, cx, cy) = (intrinsics.fx, intrinsics.fy, intrinsics.cx, intrinsics.cy)
+         let depthMap = depthData.depthMap
+         let width = CVPixelBufferGetWidth(depthMap)
+         let height = CVPixelBufferGetHeight(depthMap)
+         
+         CVPixelBufferLockBaseAddress(depthMap, .readOnly)
+         defer { CVPixelBufferUnlockBaseAddress(depthMap, .readOnly) }
+         frame.rawFeaturePoints?.points
+         guard let baseAddress = CVPixelBufferGetBaseAddress(depthMap) else { return [] }
+         let rowBytes = CVPixelBufferGetBytesPerRow(depthMap)
+         
+         var pointCloud: [(x: Float, y: Float, z: Float)] = []
+         
+         for y in stride(from: 0, to: height, by: 2) { // Process every 2nd row for speed
+         for x in stride(from: 0, to: width, by: 2) { // Process every 2nd column
+         let depth = baseAddress
+         .advanced(by: y * rowBytes + x * MemoryLayout<Float>.size)
+         .assumingMemoryBound(to: Float.self)
+         .pointee
+         if depth > 0 {
+         let xWorld = (Float(x) - cx) * depth / fx
+         let yWorld = (Float(y) - cy) * depth / fy
+         let zWorld = depth
+         pointCloud.append((x: xWorld, y: yWorld, z: zWorld))
+         }
+         }
+         }
+         return pointCloud*/
         pointCloud = []
         return pointCloud
     }
@@ -128,32 +131,45 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
     private let minInterval: TimeInterval = 1.0 / 15.0 // 15 Hz
     
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        resetPointCloud()
-        
+        // Only proceed if enough time has passed to send data
         let currentTime = Date().timeIntervalSince1970
         guard currentTime - lastSendTime >= minInterval else { return }
         lastSendTime = currentTime
         
-       
+        // Reset the point cloud and prepare to combine
         var combinedPointCloud: [(x: Float, y: Float, z: Float)] = []
         
-        
-        if let sceneDepth = frame.sceneDepth {
-            combinedPointCloud += extractPointCloudFromDepth(frame: frame, depthData: sceneDepth)!
+        // Extract point cloud from depth data if available
+        if let sceneDepth = frame.sceneDepth, let depthPointCloud = extractPointCloudFromDepth(frame: frame, depthData: sceneDepth) {
+            combinedPointCloud.append(contentsOf: depthPointCloud)
         }
         
-        combinedPointCloud = convertMeshToPointCloud(anchors: frame.anchors)
+        // Convert mesh data to point cloud and combine
+        let meshPointCloud = convertMeshToPointCloud(anchors: frame.anchors)
+        combinedPointCloud.append(contentsOf: meshPointCloud)
         
+        // If the combined point cloud is not empty, send to ROS
         if !combinedPointCloud.isEmpty {
-            sendPointCloudToROS(pointCloud: combinedPointCloud)
+            DispatchQueue.global(qos: .background).async {
+                self.sendPointCloudToROS(pointCloud: combinedPointCloud)
+            }
         }
         
+        // Process the camera image in parallel with point cloud transmission
+        /*DispatchQueue.global(qos: .background).async { [weak self] in
+            self?.processCapturedImage(cameraImage)
+        }*/
     }
     
+    //let camera = Camera(webSocketManager: WebSocketManager())
+    
+    
+    
+    
     // Function to reset the point cloud buffer
-       func resetPointCloud() {
-           pointCloud.removeAll(keepingCapacity: false)
-       }
+    func resetPointCloud() {
+        pointCloud.removeAll(keepingCapacity: false)
+    }
     
     
     // Format Data for ROS
