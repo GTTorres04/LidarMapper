@@ -149,56 +149,26 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
         combinedPointCloud.append(contentsOf: meshPointCloud)
         
         
-        if let data = convertPixelBufferToData(pixelBuffer: frame.capturedImage) {
-            DispatchQueue.global(qos: .background).async {
-                self.sendImageToROS(imageData: data) // Comment, uncomment this to send images
-            }
-        } else {
-            // Handle nil case
-            print("No data returned")
-        }
+        //if let data = convertPixelBufferToData(pixelBuffer: frame.capturedImage) {
+        //    DispatchQueue.global(qos: .background).async {
+        //        self.sendImageToROS(imageData: data) // Comment, uncomment this to send images
+        //    }
+        //} else {
+        //    // Handle nil case
+        //    print("No data returned")
+        //}
         
         // If the combined point cloud is not empty, send to ROS
         if !combinedPointCloud.isEmpty {
             DispatchQueue.global(qos: .background).async {
-                //self.sendPointCloudToROS(pointCloud: combinedPointCloud)
+                self.sendPointCloudToROS(pointCloud: combinedPointCloud)
             }
         }
     }
     
     //let camera = Camera(webSocketManager: WebSocketManager())
     
-    func convertPixelBufferToData(pixelBuffer: CVPixelBuffer) -> Data? {
-        // Lock the base address of the pixel buffer
-        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
-        
-        // Get the width and height of the pixel buffer
-        let width = CVPixelBufferGetWidth(pixelBuffer)
-        let height = CVPixelBufferGetHeight(pixelBuffer)
-        
-        // Get the pixel buffer base address
-        let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer)
-        
-        // Create a Data object from the pixel data
-        var data = Data()
-        
-        // The base address points to the beginning of the pixel buffer data
-        if let baseAddress = baseAddress {
-            let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
-            let totalBytes = bytesPerRow * height
-            
-            // Create a buffer from the pixel data
-            let buffer = Data(bytes: baseAddress, count: totalBytes)
-            
-            // Append the buffer to the data object
-            data.append(buffer)
-        }
-        
-        // Unlock the base address
-        CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
-                
-        return data
-    }
+
     
     // Function to reset the point cloud buffer
     func resetPointCloud() {
@@ -263,20 +233,51 @@ class PointCloudData: NSObject, ARSessionDelegate, ObservableObject, AVCaptureDe
         }
         return data
     }
+
     
+    //MARK: - Camera
     private func sendImageToROS(imageData: Data){
         
-        
         let json_camera_info = getCameraInfo();
-        //let json_camera = getCamera(imageData: imageData);
+        let json_camera = getCamera(imageData: imageData);
         
         webSocketManager.send(message: json_camera_info)
-        //webSocketManager.send(message: json_camera)
-        
+        webSocketManager.send(message: json_camera)
         
     }
     
-    //MARK: - Get CameraInfo JSON messages
+    func convertPixelBufferToData(pixelBuffer: CVPixelBuffer) -> Data? {
+        // Lock the base address of the pixel buffer
+        CVPixelBufferLockBaseAddress(pixelBuffer, .readOnly)
+        
+        // Get the width and height of the pixel buffer
+        let width = CVPixelBufferGetWidth(pixelBuffer)
+        let height = CVPixelBufferGetHeight(pixelBuffer)
+        
+        // Get the pixel buffer base address
+        let baseAddress = CVPixelBufferGetBaseAddress(pixelBuffer)
+        
+        // Create a Data object from the pixel data
+        var data = Data()
+        
+        // The base address points to the beginning of the pixel buffer data
+        if let baseAddress = baseAddress {
+            let bytesPerRow = CVPixelBufferGetBytesPerRow(pixelBuffer)
+            let totalBytes = bytesPerRow * height
+            
+            // Create a buffer from the pixel data
+            let buffer = Data(bytes: baseAddress, count: totalBytes)
+            
+            // Append the buffer to the data object
+            data.append(buffer)
+        }
+        
+        // Unlock the base address
+        CVPixelBufferUnlockBaseAddress(pixelBuffer, .readOnly)
+                
+        return data
+    }
+    
     private func getCameraInfo() -> String{
         
         let timestamp = Date().timeIntervalSince1970
